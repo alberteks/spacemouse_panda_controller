@@ -1,6 +1,7 @@
 import pyspacemouse
 import mujoco
 import mujoco.viewer
+import os
 
 def numformat(f):
     num = f
@@ -19,7 +20,9 @@ r=0
 a=0
 
 tune = 1000
-mymodel = mujoco.MjModel.from_xml_path("C:\\Users\\ali-28\\schmallan\\spacemouse_panda_controller\\assets\\franka_arm\\mjx_single_cube.xml")
+script_dir = os.path.dirname(__file__)
+xml_path = os.path.join(script_dir, "..", "assets", "franka_arm", "mjx_single_cube.xml")
+mymodel = mujoco.MjModel.from_xml_path(xml_path)
 mydata = mujoco.MjData(mymodel)
 with pyspacemouse.open() as device:
     with mujoco.viewer.launch_passive(mymodel,mydata) as viewer:
