@@ -9,6 +9,14 @@ def numformat(f):
         sx = '+'+sx
     return sx
 
+x=0
+y=0
+z=0
+p=0
+w=0
+r=0
+
+a=0
 
 tune = 1000
 mymodel = mujoco.MjModel.from_xml_path("C:\\Users\\ali-28\\schmallan\\spacemouse_panda_controller\\assets\\franka_arm\\mjx_single_cube.xml")
@@ -16,22 +24,27 @@ mydata = mujoco.MjData(mymodel)
 with pyspacemouse.open() as device:
     with mujoco.viewer.launch_passive(mymodel,mydata) as viewer:
         while viewer.is_running():
-
-            x = state.x/tune
-            y = state.y/tune
-            z = state.z/tune
-            p = state.pitch/tune
-            w = 
-
             state = device.read()    
-            #mujoco.mjs_setToPosition()
-            mydata.ctrl[0] += state.yaw/tune
-            mydata.ctrl[2] += state.roll/tune
-            mydata.ctrl[4] += state.x/tune
 
-            mydata.ctrl[3] += state.pitch/tune
-            mydata.ctrl[1] += state.y/tune
-            mydata.ctrl[5] += state.z/tune
+            x += state.x/tune
+            y += state.y/tune
+            z += state.z/tune
+            p += state.pitch/tune
+            w += state.yaw/tune
+            r += state.roll/tune
+            a += state.buttons[0]/tune
+            a -= state.buttons[1]/tune
+
+            #mujoco.mjs_setToPosition()
+            mydata.ctrl[0] = w
+            mydata.ctrl[2] = r
+            mydata.ctrl[5] = x
+
+            mydata.ctrl[3] = p
+            mydata.ctrl[1] = y
+            mydata.ctrl[6] = z
+
+            mydata.ctrl[7] = a
             
             mujoco.mj_step(mymodel, mydata)
             viewer.sync()
