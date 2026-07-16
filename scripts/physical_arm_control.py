@@ -66,10 +66,10 @@ def main():
                 cartesian_pose = CartesianPose(new_cartesian_pose)
 
                 # Set motion_finished flag to True on the last update
-                if time_elapsed >= 5.0:
+                if time_elapsed >= 15.0:
                     cartesian_pose.motion_finished = True
                     motion_finished = True
-                    print("Finished motion, shutting down example")
+                    print("Finished motion, shutting down motion control.")
 
                 # Send command to robot
                 active_control.writeOnce(cartesian_pose)
