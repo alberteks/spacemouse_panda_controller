@@ -5,10 +5,34 @@
 
 #define MAX_STR 255
 
+	int x;
+	int y;
+	int z;
+	int pitch;
+	int yaw;
+	int roll;
+
+void parseBuf(unsigned char* buf){
+
+
+		if (buf[0] == 1){
+			 pitch = (short)(buf[2] << 8) | buf[1];
+			 yaw = (short)(buf[4] << 8) | buf[3];
+			 roll = (short)(buf[6] << 8) | buf[5];
+			
+		} else {
+			 x = (short)(buf[2] << 8) | buf[1];
+			 y = (short)(buf[4] << 8) | buf[3];
+			 z = (short)(buf[6] << 8) | buf[5];
+		}
+	
+}
+
+int bufSize = 10;
 int main(int argc, char* argv[])
 {
 	int res;
-	unsigned char buf[65];
+	unsigned char buf[bufSize];
 	wchar_t wstr[MAX_STR];
 	hid_device *handle;
 	int i;
@@ -25,24 +49,26 @@ int main(int argc, char* argv[])
  		return 1;
 	}
 
-	// Read the Manufacturer String
-	res = hid_get_manufacturer_string(handle, wstr, MAX_STR);
-	printf("Manufacturer String: %ls\n", wstr);
+	
 
-	// Read the Product String
-	res = hid_get_product_string(handle, wstr, MAX_STR);
-	printf("Product String: %ls\n", wstr);
+	hid_set_nonblocking(handle,1);
 
-	// Read the Serial Number String
-	res = hid_get_serial_number_string(handle, wstr, MAX_STR);
-	printf("Serial Number String: (%d) %ls\n", wstr[0], wstr);
+	while (true){
+		res = hid_read(handle, buf, bufSize);
+		res = hid_read(handle, buf, bufSize);
+		parseBuf(buf);
+		printf("%i %i %i %i %i %i\n",x,y,z,pitch,yaw,roll);
+		printf("\n");
+	}
+	
+	// for (int i = 0; i<bufSize; i++){
 
-	// Read Indexed String 1
-	res = hid_get_indexed_string(handle, 1, wstr, MAX_STR);
-	printf("Indexed String 1: %ls\n", wstr);
-
+	// 			printf("%i ",buf[i]);
+			
+	// 		}
+	
 	// Read requested state
-	//res = hid_read(handle, buf, 65);
+	//res = hid_read(handle, buf, bufSize);
 
 	// Close the device
 	//hid_close(handle);
