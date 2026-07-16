@@ -36,7 +36,7 @@ def move_to_start(client, q_start):
     # We use 'and_wait' because teleop shouldn't start until we are in position
     client.send_goal_and_wait(goal)
     rospy.loginfo("Robot is at start position. Start teleop.")
-#creates a ROS action client for the robot arm controller
+#creates a ROS action client for the spacemouse
 def main():
     rospy.init_node('spacemouse_teleop_panda')
     arm_client = create_client()
@@ -83,8 +83,7 @@ def main():
                     point = JointTrajectoryPoint()
                     point.positions = joint_goal
                     
-                    # VERY IMPORTANT: Short duration for smooth teleop
-                    # If this is too long, the robot lags. If too short, it stutters.
+                    # If this is too long, the robot lags. If too short, it stutters. Adjust as needed.
                     point.time_from_start = rospy.Duration(0.1) 
                     
                     arm_goal.trajectory.points.append(point)
