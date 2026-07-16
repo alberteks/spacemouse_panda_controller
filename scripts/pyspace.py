@@ -5,12 +5,12 @@ import os
 import time
 from dls_algorithm import DampedLeastSquares
 
-x=0
-y=0
-z=0
-p=0
-w=0
-r=0
+dx=0
+dy=0
+dz=0
+dpitch=0
+dyaw=0
+droll=0
 
 a=0
 
@@ -53,18 +53,19 @@ with pyspacemouse.open() as device:
             mydata.ctrl[6] = z
             """
             # change in position and rotation as indicated by mouse
-            dx = state.x/tune
-            dy = state.y/tune
-            dz = state.z/tune
-            dpitch = state.pitch/tune
-            dyaw = state.yaw/tune
-            droll = state.roll/tune
+            dx += state.x/tune
+            dy += state.y/tune
+            dz += state.z/tune
+            dpitch += state.pitch/tune
+            dyaw += state.yaw/tune
+            droll += state.roll/tune
 
             # update buttons to open/close hand
             a += state.buttons[0]/tune
             a -= state.buttons[1]/tune
             mydata.ctrl[7] = a
 
+            print(dx)
             ik_solver.calculate(body_id=end_effector_id, dx=dx, dy=dy, dz=dz, droll=droll, dpitch=dpitch, dyaw=dyaw)
             mujoco.mj_step(mymodel, mydata)
             viewer.sync()
