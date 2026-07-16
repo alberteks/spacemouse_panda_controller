@@ -43,7 +43,7 @@ class DampedLeastSquares:
         # compute rotation error vector using current and target quaternions
         error_rot = np.zeros(3)
         mujoco.mju_subQuat(error_rot, target_quat, current_quat) # vector containing rotational error (difference in orientation)
-
+        error_rot = current_rot @ error_rot
         # combine position and rotation error vectors into one error matrix
         error = np.concatenate([error_pos, error_rot])
 
@@ -58,7 +58,7 @@ class DampedLeastSquares:
         joint_step = J_pinv @ error
 
         q_target = self.data.qpos.copy() # integrate changes into copy of qpos
-        mujoco.mj_integratePos(self.model, q_target, joint_step * self.step_size, 1.0)
+        mujoco.mj_integratePos(self.model, q_target, joint_step, self.step_size)
         
         # clip to joint limits and then push to ctrl to actually move arm
         for jnt_id in range(self.model.njnt):
