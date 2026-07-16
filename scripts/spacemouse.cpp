@@ -5,12 +5,12 @@
 
 #define MAX_STR 255
 
-	int x;
-	int y;
-	int z;
-	int pitch;
-	int yaw;
-	int roll;
+int x;
+int y;
+int z;
+int pitch;
+int yaw;
+int roll;
 
 void parseBuf(unsigned char* buf){
 
