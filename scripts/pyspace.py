@@ -53,12 +53,12 @@ with pyspacemouse.open() as device:
             mydata.ctrl[6] = z
             """
             # change in position and rotation as indicated by mouse
-            dx += state.x/tune
-            dy += state.y/tune
-            dz += state.z/tune
-            dpitch += state.pitch/tune
-            dyaw += state.yaw/tune
-            droll += state.roll/tune
+            dx = state.x/tune
+            dy = state.y/tune
+            dz = state.z/tune
+            dpitch = state.pitch/tune
+            dyaw = state.yaw/tune
+            droll = state.roll/tune
 
             # update buttons to open/close hand
             a += state.buttons[0]/tune
