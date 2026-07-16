@@ -18,7 +18,7 @@ int main(int argc, char* argv[])
 
 	// Open the device using the VID, PID,
 	// and optionally the Serial number.
-	handle = hid_open(0x4d8, 0x3f, NULL);
+	handle = hid_open(0x256F , 0xc635, NULL);
 	if (!handle) {
 		printf("Unable to open device\n");
 		hid_exit();
@@ -41,25 +41,11 @@ int main(int argc, char* argv[])
 	res = hid_get_indexed_string(handle, 1, wstr, MAX_STR);
 	printf("Indexed String 1: %ls\n", wstr);
 
-	// Toggle LED (cmd 0x80). The first byte is the report number (0x0).
-	buf[0] = 0x0;
-	buf[1] = 0x80;
-	res = hid_write(handle, buf, 65);
-
-	// Request state (cmd 0x81). The first byte is the report number (0x0).
-	buf[0] = 0x0;
-	buf[1] = 0x81;
-	res = hid_write(handle, buf, 65);
-
 	// Read requested state
-	res = hid_read(handle, buf, 65);
-
-	// Print out the returned buffer.
-	for (i = 0; i < 4; i++)
-		printf("buf[%d]: %d\n", i, buf[i]);
+	//res = hid_read(handle, buf, 65);
 
 	// Close the device
-	hid_close(handle);
+	//hid_close(handle);
 
 	// Finalize the hidapi library
 	res = hid_exit();
