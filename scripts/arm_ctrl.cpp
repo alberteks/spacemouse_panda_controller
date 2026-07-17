@@ -32,18 +32,23 @@ void controlThread(const std::string& hostname) {
     std::array<double, 16> initial_pose;
     std::array<double, 16> current_pose; // stores current pose of robot for reference to move it
     double time = 0.0;
+    double tot_duration = 10.0;
+    std::array<double, 3> filtered_input;
     
     SpacemouseInput currentInput; // stores latest spacemouse input
+    SpacemouseInput filteredInput; // stores latest filtered spacemouse input
 
     // main motion loop
-    robot.control([&time, &initial_pose](const franka::RobotState& robot_state,
+    robot.control([&time, &initial_pose, &current_pose, &currentInput, &filteredInput](const franka::RobotState& robot_state,
                                          franka::Duration period) -> franka::CartesianPose {
       time += period.toSec();
+      double dt = period.toSec(); // tracks current cycle's change in time to use for linear interpolation
 
       if (time == 0.0) {
         // at beginning, since we ensured robot moved to starting pose set that as the current pose
         initial_pose = robot_state.O_T_EE;
         current_pose = initial_pose;
+        filtered_input = {0.0, 0.0, 0.0};
       }
 
       // get mouse input from spacemouse.cpp thread
@@ -54,14 +59,22 @@ void controlThread(const std::string& hostname) {
           currentInput = g_mouseData;
         }
       } // lock releases and control loop not blocked
-      
-      // adjust cartesian pose of robot arm based on mouse input
-      current_pose[12] += currentInput.x;
-      current_pose[13] += currentInput.y;
-      current_pose[14] += currentInput.z;
 
-      if (time >= 10.0) {
-        std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
+      // we use an exponential moving average to move towards the target 
+      // every control cycle (1 ms), will move 2% of way from current value to target
+      constexpr double alpha = 0.02;
+      filtered_input.x = alpha * currentInput.x + (1 - alpha) * filtered_input.x;
+      filtered_input.y = alpha * currentInput.y + (1 - alpha) * filtered_input.y;
+      filtered_input.z = alpha * currentInput.z + (1 - alpha) * filtered_input.z;
+
+      // adjust cartesian pose of robot arm based on filtered mouse input; factors in time for linear interpolation
+      constexpr double max_speed = 0.03; // sets maximum speed in m/s
+      current_pose[12] += max_speed * filtered_input.x * dt;
+      current_pose[13] += max_speed * filtered_input.y * dt;
+      current_pose[14] += max_speed * filtered_input.z * dt;
+
+      if (time >= tot_duration) {
+        std::cout << std::endl << "Motion duration over, shutting down teleop" << std::endl;
         return franka::MotionFinished(current_pose);
       }
       return current_pose;
