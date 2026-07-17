@@ -1,44 +1,16 @@
 #include <cmath>
 #include <iostream>
 #include <stdio.h> // printf
-#include <wchar.h> // wchar_t
 
 #include <hidapi.h>
-
 #include <franka/exception.h>
 #include <franka/robot.h>
 
-#define MAX_STR 255
+#include "shared_state.h"
 
-int x;
-int y;
-int z;
-int pitch;
-int yaw;
-int roll;
-
-int bufSize = 10;
-
-void parseBuf(unsigned char* buf){ // bit manipulation function to parse raw input
-		if (buf[0] == 1){
-			 pitch = (short)(buf[2] << 8) | buf[1];
-			 yaw = (short)(buf[4] << 8) | buf[3];
-			 roll = (short)(buf[6] << 8) | buf[5];
-			
-		} else {
-			 x = (short)(buf[2] << 8) | buf[1];
-			 y = (short)(buf[4] << 8) | buf[3];
-			 z = (short)(buf[6] << 8) | buf[5];
-		}
-}
-
-int main(int argc, char* argv[]) {
-  if (argc != 2) {
-    std::cerr << "Usage: " << argv[0] << " <robot-hostname>" << std::endl;
-    return -1;
-  }
+void controlThread(const std::string& hostname) { 
   try {
-    franka::Robot robot(argv[1]);
+    franka::Robot robot(hostname); // access robot through libfranka via its hostname
     setDefaultBehavior(robot);
 
     // First move the robot to a suitable joint configuration
@@ -58,27 +30,10 @@ int main(int argc, char* argv[]) {
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
 
     std::array<double, 16> initial_pose;
+    std::array<double, 16> current_pose; // stores current pose of robot for reference to move it
     double time = 0.0;
-
-    // setup for getting input from 3dspacemouse
-    int res;
-    unsigned char buf[bufSize];
-    wchar_t wstr[MAX_STR];
-    hid_device *handle;
-    int i;
-
-    // Initialize the hidapi library
-    res = hid_init();
-
-    // Open the device using the VID, PID,
-    // and optionally the Serial number.
-    handle = hid_open(0x256F , 0xc635, NULL);
-    if (!handle) {
-      printf("Unable to open device\n");
-      hid_exit();
-      return 1;
-    }
-    hid_set_nonblocking(handle,1);
+    
+    SpacemouseInput currentInput; // stores latest spacemouse input
 
     // main motion loop
     robot.control([&time, &initial_pose](const franka::RobotState& robot_state,
@@ -86,31 +41,32 @@ int main(int argc, char* argv[]) {
       time += period.toSec();
 
       if (time == 0.0) {
+        // at beginning, since we ensured robot moved to starting pose set that as the current pose
         initial_pose = robot_state.O_T_EE;
+        current_pose = initial_pose;
       }
 
-      // read mouse input
-      res = hid_read(handle, buf, bufSize);
-		  res = hid_read(handle, buf, bufSize);
-		  parseBuf(buf); // sets x, y, z, roll, pitch, yaw
+      // get mouse input from spacemouse.cpp thread
+      //lock and copy data out
+      {
+        std::unique_lock<std::mutex> lock(g_mouseMutex, std::try_to_lock);
+        if (lock.owns_lock()) { // only get the mouse input if lock is available rn. if not, then reuse currentInput from prev mouse state read
+          currentInput = g_mouseData;
+        }
+      } // lock releases and control loop not blocked
       
-      std::array<double, 16> new_pose = initial_pose;
-      new_pose[12] += x;
-      new_pose[13] += y;
-      new_pose[14] += z;
+      // adjust cartesian pose of robot arm based on mouse input
+      current_pose[12] += currentInput.x;
+      current_pose[13] += currentInput.y;
+      current_pose[14] += currentInput.z;
 
       if (time >= 10.0) {
         std::cout << std::endl << "Finished motion, shutting down example" << std::endl;
-        return franka::MotionFinished(new_pose);
+        return franka::MotionFinished(current_pose);
       }
-      return new_pose;
+      return current_pose;
     });
   } catch (const franka::Exception& e) {
     std::cout << e.what() << std::endl;
-    return -1;
   }
-
-  // Finalize the hidapi library
-	res = hid_exit();
-  return 0;
 }
