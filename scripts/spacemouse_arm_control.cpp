@@ -19,6 +19,8 @@ int roll;
 
 int bufSize = 10;
 
+//original control code from https://github.com/frankarobotics/libfranka/blob/main/examples/generate_cartesian_pose_motion.cpp 
+
 void parseBuf(unsigned char* buf){ // bit manipulation function to parse raw input
 		if (buf[0] == 1){
 			 pitch = (short)(buf[2] << 8) | buf[1];
@@ -38,6 +40,7 @@ int main(int argc, char* argv[]) {
     return -1;
   }
   try {
+
     franka::Robot robot(argv[1]);
     setDefaultBehavior(robot);
 
