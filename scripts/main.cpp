@@ -8,7 +8,7 @@ void controlThread(const std::string& hostname);
 int main(int argc, char* argv[]) {
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <robot-hostname>" << std::endl;
-        return -1
+        return -1;
     }
 
     std::thread mouseThread(spacemouseThread);

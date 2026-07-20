@@ -9,6 +9,7 @@
 #include <math.h>
 
 #include "shared_state.h"
+#include "arm_ctrl.h"
 
 float goalSpeed = 0.001;
 float armSpeed = 0.001;
@@ -39,7 +40,6 @@ void controlThread(const std::string& hostname) {
     std::array<double, 16> current_pose; // stores current pose of robot for reference to move it
     double time = 0.0;
     double tot_duration = 10.0;
-    std::array<double, 3> filtered_input;
     
     SpacemouseInput currentInput; // stores latest spacemouse input
     SpacemouseInput goalPosition;
@@ -48,7 +48,7 @@ void controlThread(const std::string& hostname) {
     
 
     // main motion loop
-    robot.control([&time, &initial_pose, &current_pose, &currentInput, &filteredInput](const franka::RobotState& robot_state,
+    robot.control([&time, &initial_pose, &current_pose, &currentInput, &tot_duration, &goalPosition, &difference, &initialized](const franka::RobotState& robot_state,
                                          franka::Duration period) -> franka::CartesianPose {
       time += period.toSec();
       

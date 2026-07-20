@@ -39,7 +39,6 @@ void spacemouseThread()
 	if (!handle) {
 		printf("Unable to open device\n");
 		hid_exit();
- 		return 1;
 	}
 
 	hid_set_nonblocking(handle,1);
