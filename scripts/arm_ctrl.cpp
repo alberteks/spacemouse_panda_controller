@@ -6,8 +6,12 @@
 #include <franka/exception.h>
 #include <franka/robot.h>
 
+#include <math.h>
+
 #include "shared_state.h"
 
+float goalSpeed = 0.001;
+float armSpeed = 0.001;
 void controlThread(const std::string& hostname) { 
   try {
     franka::Robot robot(hostname); // access robot through libfranka via its hostname
@@ -28,6 +32,8 @@ void controlThread(const std::string& hostname) {
         {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}}, {{20.0, 20.0, 18.0, 18.0, 16.0, 14.0, 12.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}},
         {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}}, {{20.0, 20.0, 20.0, 25.0, 25.0, 25.0}});
+    
+      
 
     std::array<double, 16> initial_pose;
     std::array<double, 16> current_pose; // stores current pose of robot for reference to move it
@@ -36,7 +42,9 @@ void controlThread(const std::string& hostname) {
     std::array<double, 3> filtered_input;
     
     SpacemouseInput currentInput; // stores latest spacemouse input
-    SpacemouseInput filteredInput; // stores latest filtered spacemouse input
+    SpacemouseInput goalPosition;
+    SpacemouseInput difference;
+    
 
     // main motion loop
     robot.control([&time, &initial_pose, &current_pose, &currentInput, &filteredInput](const franka::RobotState& robot_state,
@@ -48,7 +56,11 @@ void controlThread(const std::string& hostname) {
         // at beginning, since we ensured robot moved to starting pose set that as the current pose
         initial_pose = robot_state.O_T_EE;
         current_pose = initial_pose;
-        filtered_input = {0.0, 0.0, 0.0};
+
+        goalPosition.x = initial_pose[12];
+        goalPosition.y = initial_pose[13];
+        goalPosition.z = initial_pose[14];
+        //!! code needs to be updated to include orientation later.
       }
 
       // get mouse input from spacemouse.cpp thread
@@ -60,18 +72,29 @@ void controlThread(const std::string& hostname) {
         }
       } // lock releases and control loop not blocked
 
-      // we use an exponential moving average to move towards the target 
-      // every control cycle (1 ms), will move 2% of way from current value to target
-      constexpr double alpha = 0.02;
-      filtered_input.x = alpha * currentInput.x + (1 - alpha) * filtered_input.x;
-      filtered_input.y = alpha * currentInput.y + (1 - alpha) * filtered_input.y;
-      filtered_input.z = alpha * currentInput.z + (1 - alpha) * filtered_input.z;
+      //update goal position
+      goalPosition.x += currentInput.x*goalSpeed;
+      goalPosition.y += currentInput.y*goalSpeed;
+      goalPosition.z += currentInput.z*goalSpeed;
+      
+      //find difference in goal and current
+      difference.x = current_pose[12]-goalPosition.x;
+      difference.y = current_pose[13]-goalPosition.y;
+      difference.z = current_pose[14]-goalPosition.z;
 
-      // adjust cartesian pose of robot arm based on filtered mouse input; factors in time for linear interpolation
-      constexpr double max_speed = 0.03; // sets maximum speed in m/s
-      current_pose[12] += max_speed * filtered_input.x * dt;
-      current_pose[13] += max_speed * filtered_input.y * dt;
-      current_pose[14] += max_speed * filtered_input.z * dt;
+      //find magnitude of difference vector
+      float magXY = sqrt(pow(difference.x,2)+pow(difference.y,2));
+      float magnitude = sqrt(pow(maxXY,2)+pow(difference.z,2));
+
+      //normalize difference vector, multiply by speed
+      difference.x *= armSpeed / magnitude;
+      difference.y *= armSpeed / magnitude;
+      difference.z *= armSpeed / magnitude;
+
+      //update current pose
+      current_pose[12] += difference.x;
+      current_pose[13] += difference.y;
+      current_pose[14] += difference.z;
 
       if (time >= tot_duration) {
         std::cout << std::endl << "Motion duration over, shutting down teleop" << std::endl;
