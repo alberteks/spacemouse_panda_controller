@@ -84,7 +84,7 @@ void controlThread(const std::string& hostname) {
 
       //find magnitude of difference vector
       float magXY = sqrt(pow(difference.x,2)+pow(difference.y,2));
-      float magnitude = sqrt(pow(maxXY,2)+pow(difference.z,2));
+      float magnitude = sqrt(pow(magXY,2)+pow(difference.z,2));
 
       //normalize difference vector, multiply by speed
       difference.x *= armSpeed / magnitude;

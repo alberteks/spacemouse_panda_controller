@@ -24,7 +24,7 @@ namespace {
 
 void spacemouseThread()
 {
-	constexpr int bufSize = 10; 
+	constexpr int bufSize = 10;
 	int res;
 	unsigned char buf[bufSize];
 	hid_device *handle;
