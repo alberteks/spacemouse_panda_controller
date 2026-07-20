@@ -44,15 +44,15 @@ void controlThread(const std::string& hostname) {
     SpacemouseInput currentInput; // stores latest spacemouse input
     SpacemouseInput goalPosition;
     SpacemouseInput difference;
+    bool initialized = false; 
     
 
     // main motion loop
     robot.control([&time, &initial_pose, &current_pose, &currentInput, &filteredInput](const franka::RobotState& robot_state,
                                          franka::Duration period) -> franka::CartesianPose {
       time += period.toSec();
-      double dt = period.toSec(); // tracks current cycle's change in time to use for linear interpolation
-
-      if (time == 0.0) {
+      
+      if (!initialized) {
         // at beginning, since we ensured robot moved to starting pose set that as the current pose
         initial_pose = robot_state.O_T_EE;
         current_pose = initial_pose;
@@ -61,6 +61,7 @@ void controlThread(const std::string& hostname) {
         goalPosition.y = initial_pose[13];
         goalPosition.z = initial_pose[14];
         //!! code needs to be updated to include orientation later.
+        initialized = true; 
       }
 
       // get mouse input from spacemouse.cpp thread
