@@ -36,6 +36,16 @@ void spacemouseThread()
 	int local_x = 0, local_y = 0, local_z = 0;
 	int local_pitch = 0, local_yaw = 0, local_roll = 0;
 
+	// Open the device using the VID, PID,
+	// and optionally the Serial number.
+	handle = hid_open(0x256F , 0xc635, NULL);
+	if (!handle) {
+		printf("Unable to open device\n");
+		hid_exit();
+	}
+
+	hid_set_nonblocking(handle,1);
+
 	// main loop to read spacemouse input
 	while (true){
 		res = hid_read(g_handle, buf, bufSize);
