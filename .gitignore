@@ -1,1 +1,14 @@
 .vscode/
+
+build/
+bin/
+*.exe
+*.out
+*.o
+*.obj
+
+*.deb
+*.deb.sha256
+
+__pycache__/
+*.pyc
