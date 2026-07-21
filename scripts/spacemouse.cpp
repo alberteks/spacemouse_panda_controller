@@ -50,6 +50,9 @@ void spacemouseThread()
 				local_y = (short)(buf[4] << 8) | buf[3];
 				local_z = (short)(buf[6] << 8) | buf[5];
 			}
+			
+			// if want to constantly output raw input to console, see below
+			// std::cout << "x: " << local_x << ", y: " << local_y << ", z: " << local_z << std::endl;
 
 			// lock and update shared struct for use in arm ctrler
 			{

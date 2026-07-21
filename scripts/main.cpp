@@ -7,7 +7,8 @@ void spacemouseThread();
 void closeSpacemouse();
 
 // void controlThread(const std::string& hostname);
-void printState(const std::string& hostname);
+// void printState(const std::string& hostname);
+void testSpacemouseReading(const std::string& hostname);
 
 int main(int argc, char* argv[]) {
     if (argc != 2) {
@@ -23,8 +24,9 @@ int main(int argc, char* argv[]) {
     std::cout << "Starting spacemouse thread" << std::endl;
     std::thread mouseThread(spacemouseThread); // main polling thread to read spacemouse input
 
-    std::cout << "Starting printstate thread" << std::endl;
-    printState(argv[1]);
+    std::cout << "Starting test thread" << std::endl;
+    testSpacemouseReading(argv[1]);
+    // printState(argv[1]);
     // run franka ctrl loop on main thread
     // controlThread(argv[1]);
 
