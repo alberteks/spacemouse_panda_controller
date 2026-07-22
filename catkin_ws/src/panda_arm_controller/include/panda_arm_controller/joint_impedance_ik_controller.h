@@ -17,6 +17,7 @@
 #include <ros/subscriber.h>
 
 #include <geometry_msgs/Twist.h>
+#include <realtime_tools/realtime_buffer.h> 
 
 #include <tf2/LinearMath/Vector3.h>
 
@@ -24,6 +25,9 @@
 #include <kdl/tree.hpp>
 #include <kdl/chain.hpp>
 #include <kdl/jntarray.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/chainiksolverpos_nr_jl.hpp>
 
 #include <Eigen/Dense>
 
@@ -88,12 +92,14 @@ class JointImpedanceIKController
   // --- ROS interfaces ---
 
   ros::Subscriber spacemouse_sub_;
+  realtime_tools::RealtimeBuffer<geometry_msgs::Twist> spacemouse_buffer_; //for the threads?
 
   // --- impedance gains / filtering ---
 
   Vector7d k_gains_;
   Vector7d d_gains_;
   Vector7d dq_filtered_;
+  double kAlpha = 0.05;
 
   // --- identity / config ---
 
@@ -106,6 +112,8 @@ class JointImpedanceIKController
   // precise control. See spacemouseCallback().
   double max_linear_pos_update_ = 0.007;
   double max_angular_pos_update_ = 0.03;
+  int ik_max_iterations_ = 100; //number of iterations for the IK solver to converge
+  double ik_eps_ = 1e-5; //allowable error for IK convergence
 
   // --- kinematics (URDF -> KDL chain) ---
 
@@ -117,15 +125,15 @@ class JointImpedanceIKController
   KDL::JntArray q_max_;
   KDL::JntArray q_init_;
   KDL::JntArray q_result_;
+//Takes load off of the loop (i guess?)
+  std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_;
+  std::unique_ptr<KDL::ChainIkSolverVel_pinv> ik_vel_solver_;
+  std::unique_ptr<KDL::ChainIkSolverPos_NR_JL> ik_pos_solver_;
 
   // --- Cartesian state / teleop targets ---
 
-  Eigen::Vector3d position_;
-  Eigen::Quaterniond orientation_;
-
-  Eigen::Vector3d desired_linear_position_update_;
-  Eigen::Vector3d desired_angular_position_update_;
-  Eigen::Quaterniond desired_angular_position_update_quaternion_;
+  Eigen::Vector3d target_position_;
+  Eigen::Quaterniond target_orientation_;
 
   // --- joint-space state ---
 
