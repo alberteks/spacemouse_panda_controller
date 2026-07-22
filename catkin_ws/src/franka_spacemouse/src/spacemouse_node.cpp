@@ -88,7 +88,7 @@ int main (int argc, char** argv)
 				mouse_msg.angular.y = 0;
 			}
 			if (std::abs(mouse_msg.angular.z) <= 100) {
-				mouse_msg.linear.z = 0;
+				mouse_msg.angular.z = 0;
 			}
 			
 			// if want to constantly output raw input to console, see below
@@ -96,12 +96,12 @@ int main (int argc, char** argv)
 			// 	std::cout << "x: " << mouse_msg.linear.x << ", y: " << mouse_msg.linear.y << ", z: " << mouse_msg.linear.z << std::endl;
 			// 	time_counter = 0.0;
 			// }
+			pub.publish(mouse_msg); // sends msg payload to topic
 		}
-		pub.publish(mouse_msg); // sends msg payload to topic
 		ros::spinOnce();
 		rate.sleep(); // sleep so that we poll at defined rate (100 Hz)
 	}
 	// Finalize the hidapi library
-	res = hid_exit();
+	closeSpacemouse();
 	return 0;
 }
