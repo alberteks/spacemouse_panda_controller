@@ -115,6 +115,7 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
     ROS_ERROR("JointImpedanceIKController: failed to convert URDF to KDL tree");
     return false;
   }
+
   std::string base_name = arm_id_ + "_link0";
   std::string tcp_name = arm_id_ + "_hand_tcp";
   if (!tree_.getChain(base_name, tcp_name, chain_)) {
@@ -147,7 +148,6 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
   }
 
   // --- construct KDL solvers once, reused every solveIK() call ---
-  // (must come after chain_/q_min_/q_max_ are built above)
   fk_solver_ = std::make_unique<KDL::ChainFkSolverPos_recursive>(chain_);
   vel_solver_ = std::make_unique<KDL::ChainIkSolverVel_pinv>(chain_);
   ik_solver_ = std::make_unique<KDL::ChainIkSolverPos_NR_JL>(
@@ -157,17 +157,11 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
   spacemouse_sub_ = node_handle.subscribe(
       "spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
 
-  //recieves info from spacemouse (subscription)
-  spacemouse_sub_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
-      "franka_controller/target_cartesian_velocity_percent", 10,
-      [this](const geometry_msgs::msg::Twist::SharedPtr msg) { this->spacemouse_callback(msg); });
-
-
-  joint_positions_desired_.clear();
+  // Properly initialize fixed-size joint vectors
+  joint_positions_desired_.assign(kNumJoints, 0.0);
   joint_positions_current_.assign(kNumJoints, 0.0);
   joint_velocities_current_.assign(kNumJoints, 0.0);
   joint_efforts_current_.assign(kNumJoints, 0.0);
-  joint_positions_desired_.assign(kNumJoints, 0.0);
 
   desired_linear_position_update_.setZero();
   desired_angular_position_update_.setZero();
@@ -180,49 +174,40 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
 // ---------------------------------------------------------------------------
 // starting()
 // ---------------------------------------------------------------------------
-void JointImpedanceIKController::update(const ros::Time& /*time*/,
-                                         const ros::Duration& /*period*/) {
+void JointImpedanceIKController::starting(const ros::Time& /*time*/) {
+  dq_filtered_.setZero();
+  desired_linear_position_update_.setZero();
+  desired_angular_position_update_.setZero();
+  desired_angular_position_update_quaternion_.setIdentity();
+
+  // Prime current-state buffers and the IK seed from the arm's actual pose
   updateJointStates();
 
-  // Position/orientation are calculated relative to target_position_ set in starting()
-  Eigen::Vector3d new_position = target_position_ + desired_linear_position_update_;
-  Eigen::Quaterniond new_orientation = target_orientation_ * desired_angular_position_update_quaternion_;                                          
-  solveIK(new_position, new_orientation);
-
-  if (joint_positions_desired_.empty()) {
-    return;
-  }
-
-  Vector7d q_desired(joint_positions_desired_.data());
-  Vector7d q_current(joint_positions_current_.data());
-  Vector7d dq_current(joint_velocities_current_.data());
-
-  Vector7d tau_d = computeTorqueCommand(q_desired, q_current, dq_current);
-
-  for (int i = 0; i < kNumJoints; ++i) {
-    joint_handles_[i].setCommand(tau_d(i));
-  }
-}
-
-// ---------------------------------------------------------------------------
-// update()
-// ---------------------------------------------------------------------------
-void JointImpedanceIKController::update(const ros::Time& /*time*/,
-                                         const ros::Duration& /*period*/) {
-  updateJointStates();
-
+  // Set initial continuous target pose ONCE during starting()
   franka::RobotState robot_state = state_handle_->getRobotState();
   Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   target_position_ = transform.translation();
   target_orientation_ = Eigen::Quaterniond(transform.linear());
+}
 
+// ---------------------------------------------------------------------------
+// update() — 1kHz Real-time Loop
+// ---------------------------------------------------------------------------
+void JointImpedanceIKController::update(const ros::Time& /*time*/,
+                                         const ros::Duration& /*period*/) {
+  updateJointStates();
+
+  // Propose updated target Cartesian pose
   Eigen::Vector3d new_position = target_position_ + desired_linear_position_update_;
-  Eigen::Quaterniond new_orientation = target_orientation_ * desired_angular_position_update_quaternion_;                                          
-  solveIK(new_position, new_orientation);
+  Eigen::Quaterniond new_orientation = (target_orientation_ * desired_angular_position_update_quaternion_).normalized();
+
+  // Solve IK and advance target position ONLY if IK succeeds
+  if (solveIK(new_position, new_orientation)) {
+    target_position_ = new_position;
+    target_orientation_ = new_orientation;
+  }
 
   if (joint_positions_desired_.empty()) {
-    // No IK solution yet (e.g. very first cycle, or a transient IK failure
-    // already logged inside solveIK()) - skip commanding torques this cycle.
     return;
   }
 
@@ -269,7 +254,7 @@ JointImpedanceIKController::Vector7d JointImpedanceIKController::computeTorqueCo
 // ---------------------------------------------------------------------------
 // solveIK()
 // ---------------------------------------------------------------------------
-void JointImpedanceIKController::solveIK(const Eigen::Vector3d& new_position,
+bool JointImpedanceIKController::solveIK(const Eigen::Vector3d& new_position,
                                           const Eigen::Quaterniond& new_orientation) {
   KDL::Rotation kdl_rot = KDL::Rotation::Quaternion(
       new_orientation.x(), new_orientation.y(), new_orientation.z(), new_orientation.w());
@@ -278,34 +263,38 @@ void JointImpedanceIKController::solveIK(const Eigen::Vector3d& new_position,
 
   int status = ik_solver_->CartToJnt(q_init_, desired_pose, q_result_);
   if (status < 0) {
-    // Do not throw from the real-time control loop: log and hold the last
-    // valid joint_positions_desired_ (if any) rather than aborting.
     ROS_WARN_THROTTLE(1.0, "JointImpedanceIKController: IK failed (status %d), holding last target",
                        status);
-    return;
+    return false;
+  }
+
+  // Ensure vector size matches joint count before indexing
+  if (joint_positions_desired_.size() != static_cast<size_t>(kNumJoints)) {
+    joint_positions_desired_.resize(kNumJoints);
   }
 
   for (int i = 0; i < kNumJoints; ++i) {
     joint_positions_desired_[i] = q_result_(i);
   }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
 // spacemouseCallback()
 // ---------------------------------------------------------------------------
 void JointImpedanceIKController::spacemouseCallback(const geometry_msgs::TwistConstPtr& msg) {
-  //tf2::Vector3 v_linear_world = transformVelocityToWorldFrame(msg);
+  tf2::Vector3 v_linear_world = transformVelocityToWorldFrame(msg);
 
-  //desired_angular_position_update_ =
-      //max_angular_pos_update_ * Eigen::Vector3d(msg->angular.x, msg->angular.y, msg->angular.z);
-  //desired_linear_position_update_ =
-    //  max_linear_pos_update_ *
-      //Eigen::Vector3d(v_linear_world.x(), v_linear_world.y(), v_linear_world.z());
+  desired_angular_position_update_ =
+      max_angular_pos_update_ * Eigen::Vector3d(msg->angular.x, msg->angular.y, msg->angular.z);
+  desired_linear_position_update_ =
+      max_linear_pos_update_ *
+      Eigen::Vector3d(v_linear_world.x(), v_linear_world.y(), v_linear_world.z());
 
-  //Eigen::AngleAxisd roll_angle(desired_angular_position_update_.x(), Eigen::Vector3d::UnitX());
-  //Eigen::AngleAxisd pitch_angle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
-  //Eigen::AngleAxisd yaw_angle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
-  //desired_angular_position_update_quaternion_ = yaw_angle * pitch_angle * roll_angle;
+  Eigen::AngleAxisd roll_angle(desired_angular_position_update_.x(), Eigen::Vector3d::UnitX());
+  Eigen::AngleAxisd pitch_angle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
+  Eigen::AngleAxisd yaw_angle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
+  desired_angular_position_update_quaternion_ = yaw_angle * pitch_angle * roll_angle;
 }
 
 // ---------------------------------------------------------------------------
@@ -356,8 +345,8 @@ bool JointImpedanceIKController::assignParameters(ros::NodeHandle& node_handle) 
     d_gains_(i) = d_gains.at(i);
   }
 
-  node_handle.param("max_linear_pos_update", max_linear_pos_update_, 0.001);
-  node_handle.param("max_angular_pos_update", max_angular_pos_update_, 0.001);
+  node_handle.param("max_linear_pos_update", max_linear_pos_update_, max_linear_pos_update_);
+  node_handle.param("max_angular_pos_update", max_angular_pos_update_, max_angular_pos_update_);
 
   return true;
 }
