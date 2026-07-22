@@ -1,0 +1,8 @@
+prefix=/mnt/c/Users/productive albert/spacemousearmcontroller/catkin_ws/devel
+
+Name: panda_arm_controller
+Description: Description of panda_arm_controller
+Version: 0.1.0
+Cflags: -I/mnt/c/Users/productive albert/spacemousearmcontroller/catkin_ws/src/panda_arm_controller/include
+Libs: -L${prefix}/lib 
+Requires: roscpp std_msgs
