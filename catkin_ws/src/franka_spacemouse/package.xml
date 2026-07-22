@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>franka_spacemouse</name>
+  <version>0.0.1</version>
+  <description>Publishes 3DConnexion spacemouse compact input as geometry_msgs/Twist for use in Franka Emika Panda teleoperation.</description>
+  <maintainer email="albert.a.eks@gmail.com">Albert Eksarevskiy</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>geometry_msgs</depend>
+  <depend>hidapi</depend>
+</package>
