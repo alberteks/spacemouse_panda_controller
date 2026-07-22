@@ -157,6 +157,12 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
   spacemouse_sub_ = node_handle.subscribe(
       "spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
 
+  //recieves info from spacemouse (subscription)
+  spacemouse_sub_ = get_node()->create_subscription<geometry_msgs::msg::Twist>(
+      "franka_controller/target_cartesian_velocity_percent", 10,
+      [this](const geometry_msgs::msg::Twist::SharedPtr msg) { this->spacemouse_callback(msg); });
+
+
   joint_positions_desired_.clear();
   joint_positions_current_.assign(kNumJoints, 0.0);
   joint_velocities_current_.assign(kNumJoints, 0.0);
