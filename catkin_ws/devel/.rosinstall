@@ -1,2 +1,2 @@
 - setup-file:
-    local-name: /mnt/c/Users/productive albert/spacemousearmcontroller/catkin_ws/devel/setup.sh
+    local-name: /home/bert/catkin_ws_link/devel/setup.sh

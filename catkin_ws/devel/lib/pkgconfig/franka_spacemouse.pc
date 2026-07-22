@@ -1,0 +1,8 @@
+prefix=/home/bert/catkin_ws_link/devel
+
+Name: franka_spacemouse
+Description: Description of franka_spacemouse
+Version: 0.0.1
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: roscpp geometry_msgs

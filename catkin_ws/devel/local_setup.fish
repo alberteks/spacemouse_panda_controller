@@ -5,7 +5,7 @@
 # or fall back to the destination set at configure time
 
 if test -z $_CATKIN_SETUP_DIR
-    set _CATKIN_SETUP_DIR /mnt/c/Users/productive albert/spacemousearmcontroller/catkin_ws/devel
+    set _CATKIN_SETUP_DIR /home/bert/catkin_ws_link/devel
 end
 
 set CATKIN_SETUP_UTIL_ARGS "--extend --local"

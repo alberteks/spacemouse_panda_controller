@@ -18,7 +18,7 @@ if not type -q bass
 end
 
 if test -z $_CATKIN_SETUP_DIR
-    set _CATKIN_SETUP_DIR /mnt/c/Users/productive albert/spacemousearmcontroller/catkin_ws/devel
+    set _CATKIN_SETUP_DIR /home/bert/catkin_ws_link/devel
 end
 
 set _SETUP_UTIL "$_CATKIN_SETUP_DIR/_setup_util.py"
