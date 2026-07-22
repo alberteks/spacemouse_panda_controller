@@ -115,9 +115,9 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
     ROS_ERROR("JointImpedanceIKController: failed to convert URDF to KDL tree");
     return false;
   }
-
+  std::string base_name = arm_id_ + "_link0";
   std::string tcp_name = arm_id_ + "_hand_tcp";
-  if (!tree_.getChain("base", tcp_name, chain_)) {
+  if (!tree_.getChain(base_name, tcp_name, chain_)) {
     ROS_ERROR("JointImpedanceIKController: failed to extract KDL chain to '%s'", tcp_name.c_str());
     return false;
   }
@@ -154,13 +154,14 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
       chain_, q_min_, q_max_, *fk_solver_, *vel_solver_, 100, 1e-6);
 
   // --- SpaceMouse input ---
-  //spacemouse_sub_ = node_handle.subscribe(
-      //"spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
+  spacemouse_sub_ = node_handle.subscribe(
+      "spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
 
   joint_positions_desired_.clear();
   joint_positions_current_.assign(kNumJoints, 0.0);
   joint_velocities_current_.assign(kNumJoints, 0.0);
   joint_efforts_current_.assign(kNumJoints, 0.0);
+  joint_positions_desired_.assign(kNumJoints, 0.0);
 
   desired_linear_position_update_.setZero();
   desired_angular_position_update_.setZero();
@@ -173,20 +174,28 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
 // ---------------------------------------------------------------------------
 // starting()
 // ---------------------------------------------------------------------------
-void JointImpedanceIKController::starting(const ros::Time& /*time*/) {
-  dq_filtered_.setZero();
-  desired_linear_position_update_.setZero();
-  desired_angular_position_update_.setZero();
-  desired_angular_position_update_quaternion_.setIdentity();
-
-  // Prime current-state buffers and the IK seed from the arm's actual pose
-  // before the first update() cycle runs.
+void JointImpedanceIKController::update(const ros::Time& /*time*/,
+                                         const ros::Duration& /*period*/) {
   updateJointStates();
 
-  franka::RobotState robot_state = state_handle_->getRobotState();
-  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
-  target_position_ = transform.translation();
-  target_orientation_ = Eigen::Quaterniond(transform.linear());
+  // Position/orientation are calculated relative to target_position_ set in starting()
+  Eigen::Vector3d new_position = target_position_ + desired_linear_position_update_;
+  Eigen::Quaterniond new_orientation = target_orientation_ * desired_angular_position_update_quaternion_;                                          
+  solveIK(new_position, new_orientation);
+
+  if (joint_positions_desired_.empty()) {
+    return;
+  }
+
+  Vector7d q_desired(joint_positions_desired_.data());
+  Vector7d q_current(joint_positions_current_.data());
+  Vector7d dq_current(joint_velocities_current_.data());
+
+  Vector7d tau_d = computeTorqueCommand(q_desired, q_current, dq_current);
+
+  for (int i = 0; i < kNumJoints; ++i) {
+    joint_handles_[i].setCommand(tau_d(i));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -202,8 +211,7 @@ void JointImpedanceIKController::update(const ros::Time& /*time*/,
   target_orientation_ = Eigen::Quaterniond(transform.linear());
 
   Eigen::Vector3d new_position = target_position_ + desired_linear_position_update_;
-  Eigen::Quaterniond new_orientation = target_orientation_ * desired_angular_position_update_quaternion_;
-
+  Eigen::Quaterniond new_orientation = target_orientation_ * desired_angular_position_update_quaternion_;                                          
   solveIK(new_position, new_orientation);
 
   if (joint_positions_desired_.empty()) {
@@ -271,9 +279,6 @@ void JointImpedanceIKController::solveIK(const Eigen::Vector3d& new_position,
     return;
   }
 
-  if (joint_positions_desired_.size() != static_cast<size_t>(kNumJoints)) {
-    joint_positions_desired_.resize(kNumJoints);
-  }
   for (int i = 0; i < kNumJoints; ++i) {
     joint_positions_desired_[i] = q_result_(i);
   }
@@ -295,7 +300,7 @@ void JointImpedanceIKController::spacemouseCallback(const geometry_msgs::TwistCo
   //Eigen::AngleAxisd pitch_angle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
   //Eigen::AngleAxisd yaw_angle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
   //desired_angular_position_update_quaternion_ = yaw_angle * pitch_angle * roll_angle;
-//}
+}
 
 // ---------------------------------------------------------------------------
 // transformVelocityToWorldFrame()
@@ -345,8 +350,8 @@ bool JointImpedanceIKController::assignParameters(ros::NodeHandle& node_handle) 
     d_gains_(i) = d_gains.at(i);
   }
 
-  node_handle.param("max_linear_pos_update", max_linear_pos_update_, max_linear_pos_update_);
-  node_handle.param("max_angular_pos_update", max_angular_pos_update_, max_angular_pos_update_);
+  node_handle.param("max_linear_pos_update", max_linear_pos_update_, 0.001);
+  node_handle.param("max_angular_pos_update", max_angular_pos_update_, 0.001);
 
   return true;
 }
