@@ -11,15 +11,13 @@
 #include "SpacemouseArmController/shared_state.h"
 #include "SpacemouseArmController/examples_common.h"
 
-float goalSpeed = 0.001;
-float armSpeed = 0.001;
+double goalSpeed = 0.0000001;
+double armSpeed = 0.0000001;
+
 void controlThread(const std::string& hostname) { 
   try {
     std::cout << "Connecting to robot at " << hostname << std::endl;
-
     franka::Robot robot(hostname); // access robot through libfranka via its hostname
-
-    std::cout << "Seting default behavior" << std::endl;
     setDefaultBehavior(robot);
 
     // First move the robot to a suitable joint configuration
@@ -46,8 +44,8 @@ void controlThread(const std::string& hostname) {
     double tot_duration = 10.0;
     
     SpacemouseInput currentInput; // stores latest spacemouse input
-    SpacemouseInput goalPosition;
-    SpacemouseInput difference;
+    DoublePose goalPosition;
+    DoublePose difference;
     bool initialized = false; 
     
 
@@ -91,9 +89,18 @@ void controlThread(const std::string& hostname) {
       float magnitude = sqrt(pow(difference.x,2)+pow(difference.y,2)+pow(difference.z,2));
 
       //normalize difference vector, multiply by speed
-      difference.x *= armSpeed / magnitude;
-      difference.y *= armSpeed / magnitude;
-      difference.z *= armSpeed / magnitude;
+      if (magnitude > 1e-6)
+      {
+        difference.x *= armSpeed / magnitude;
+        difference.y *= armSpeed / magnitude;
+        difference.z *= armSpeed / magnitude;
+      }
+      else
+      {
+        difference.x = 0;
+        difference.y = 0;
+        difference.z = 0;
+      }
 
       //update current pose
       current_pose[12] += difference.x;

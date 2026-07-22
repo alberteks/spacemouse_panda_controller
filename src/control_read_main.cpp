@@ -8,16 +8,15 @@ void closeSpacemouse();
 
 // void controlThread(const std::string& hostname);
 // void printState(const std::string& hostname);
-// void testSpacemouseReadingThread(const std::string& hostname);
-void spacemouse_test_only();
+void testSpacemouseReadingThread(const std::string& hostname);
 
 int main(int argc, char* argv[]) {
-    /*
+    
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " <robot-hostname>" << std::endl;
         return -1;
     }
-    */
+    
 
     if (!initSpacemouse()) { // initialize spacemouse
         std::cerr << "Failed to lock HID descriptors. Exiting." << std::endl;
@@ -28,8 +27,8 @@ int main(int argc, char* argv[]) {
     std::thread mouseThread(spacemouseThread); // main polling thread to read spacemouse input
 
     std::cout << "Starting test thread" << std::endl;
-    spacemouse_test_only();
-    // testSpacemouseReadingThread(argv[1]);
+
+    testSpacemouseReadingThread(argv[1]);
     // printState(argv[1]);
     // run franka ctrl loop on main thread
     // controlThread(argv[1]);
