@@ -38,7 +38,7 @@ int main (int argc, char** argv)
 	ros::NodeHandle nh; // nh is object representing spacemouse node
 
 	// define topic name that node publishes to. then, controller will subscribe to this exact topic--only thing linking the two given decoupling setup in ros
-	ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("franka_controller/target_cartesian_velocity_percent", 1); // args are name of topic, queue size
+	ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("spacemouse/twist", 1); // args are name of topic, queue size
 	
 	if (!initSpacemouse()) { // initialize spacemouse for reading; if not accessible then exit process
         std::cerr << "Failed to lock HID descriptors. Exiting." << std::endl;
