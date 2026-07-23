@@ -13,7 +13,7 @@
 
 #include <Eigen/Geometry>
 
-namespace franka_arm_controllers {
+namespace panda_arm_controller {
 
 // ---------------------------------------------------------------------------
 // init()
@@ -77,29 +77,29 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
     return false;
   }
 
-  // --- set conservative collision behavior before any teleop input can move the arm ---
-  ros::ServiceClient collision_client =
-      node_handle.serviceClient<franka_msgs::SetFullCollisionBehavior>(
-          "franka_control/set_full_collision_behavior");
-  if (!collision_client.waitForExistence(ros::Duration(5.0))) {
-    ROS_ERROR("JointImpedanceIKController: set_full_collision_behavior service not available");
-    return false;
-  }
-  franka_msgs::SetFullCollisionBehavior collision_srv;
-  // Conservative defaults; tune once basic operation is verified.
-  collision_srv.request.lower_torque_thresholds_acceleration = {20, 20, 18, 18, 16, 14, 12};
-  collision_srv.request.upper_torque_thresholds_acceleration = {20, 20, 18, 18, 16, 14, 12};
-  collision_srv.request.lower_torque_thresholds_nominal = {20, 20, 18, 18, 16, 14, 12};
-  collision_srv.request.upper_torque_thresholds_nominal = {20, 20, 18, 18, 16, 14, 12};
-  collision_srv.request.lower_force_thresholds_acceleration = {10, 10, 10, 10, 10, 10};
-  collision_srv.request.upper_force_thresholds_acceleration = {10, 10, 10, 10, 10, 10};
-  collision_srv.request.lower_force_thresholds_nominal = {10, 10, 10, 10, 10, 10};
-  collision_srv.request.upper_force_thresholds_nominal = {10, 10, 10, 10, 10, 10};
-  if (!collision_client.call(collision_srv) || !collision_srv.response.success) {
-    ROS_ERROR("JointImpedanceIKController: failed to set collision behavior");
-    return false;
-  }
-  ROS_INFO("JointImpedanceIKController: collision behavior set.");
+  // // --- set conservative collision behavior before any teleop input can move the arm ---
+  // ros::ServiceClient collision_client =
+  //     node_handle.serviceClient<franka_msgs::SetFullCollisionBehavior>(
+  //         "franka_control/set_full_collision_behavior");
+  // if (!collision_client.waitForExistence(ros::Duration(5.0))) {
+  //   ROS_ERROR("JointImpedanceIKController: set_full_collision_behavior service not available");
+  //   return false;
+  // }
+  // franka_msgs::SetFullCollisionBehavior collision_srv;
+  // // Conservative defaults; tune once basic operation is verified.
+  // collision_srv.request.lower_torque_thresholds_acceleration = {20, 20, 18, 18, 16, 14, 12};
+  // collision_srv.request.upper_torque_thresholds_acceleration = {20, 20, 18, 18, 16, 14, 12};
+  // collision_srv.request.lower_torque_thresholds_nominal = {20, 20, 18, 18, 16, 14, 12};
+  // collision_srv.request.upper_torque_thresholds_nominal = {20, 20, 18, 18, 16, 14, 12};
+  // collision_srv.request.lower_force_thresholds_acceleration = {10, 10, 10, 10, 10, 10};
+  // collision_srv.request.upper_force_thresholds_acceleration = {10, 10, 10, 10, 10, 10};
+  // collision_srv.request.lower_force_thresholds_nominal = {10, 10, 10, 10, 10, 10};
+  // collision_srv.request.upper_force_thresholds_nominal = {10, 10, 10, 10, 10, 10};
+  // if (!collision_client.call(collision_srv) || !collision_srv.response.success) {
+  //   ROS_ERROR("JointImpedanceIKController: failed to set collision behavior");
+  //   return false;
+  // }
+  // ROS_INFO("JointImpedanceIKController: collision behavior set.");
 
   // --- fetch URDF and build the KDL chain ---
   std::string robot_description;
@@ -188,6 +188,8 @@ void JointImpedanceIKController::starting(const ros::Time& /*time*/) {
   Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   target_position_ = transform.translation();
   target_orientation_ = Eigen::Quaterniond(transform.linear());
+
+  ROS_INFO_STREAM_THROTTLE(5, "target_position_ = " << target_position_);
 }
 
 // ---------------------------------------------------------------------------
@@ -214,6 +216,9 @@ void JointImpedanceIKController::update(const ros::Time& /*time*/,
   Vector7d q_desired(joint_positions_desired_.data());
   Vector7d q_current(joint_positions_current_.data());
   Vector7d dq_current(joint_velocities_current_.data());
+
+  ROS_INFO_STREAM_THROTTLE(5, "q_desired = " << q_desired);
+  ROS_INFO_STREAM_THROTTLE(5, "q_current = " << q_current);
 
   Vector7d tau_d = computeTorqueCommand(q_desired, q_current, dq_current);
 
@@ -247,6 +252,8 @@ JointImpedanceIKController::Vector7d JointImpedanceIKController::computeTorqueCo
 
   Vector7d q_error = q_desired - q_current;
   Vector7d tau_d = k_gains_.cwiseProduct(q_error) - d_gains_.cwiseProduct(dq_filtered_) + coriolis;
+
+  ROS_INFO_STREAM_THROTTLE(5, "q_error = "<< q_error);
 
   return tau_d;
 }
@@ -351,7 +358,7 @@ bool JointImpedanceIKController::assignParameters(ros::NodeHandle& node_handle) 
   return true;
 }
 
-}  // namespace franka_arm_controllers
+}  // namespace panda_arm_controller
 
-PLUGINLIB_EXPORT_CLASS(franka_arm_controllers::JointImpedanceIKController,
+PLUGINLIB_EXPORT_CLASS(panda_arm_controller::JointImpedanceIKController,
                         controller_interface::ControllerBase)

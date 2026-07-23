@@ -1,5 +1,5 @@
 joint_impedance_ik_controller:
-  type: franka_arm_controllers/JointImpedanceIKController
+  type: panda_arm_controller/JointImpedanceIKController
   arm_id: panda
   joint_names:
     - panda_joint1

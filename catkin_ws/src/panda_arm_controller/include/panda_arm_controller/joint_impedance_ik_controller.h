@@ -31,7 +31,7 @@
 
 #include <Eigen/Dense>
 
-namespace franka_arm_controllers {
+namespace panda_arm_controller {
 
 // Joint-space impedance controller that tracks a Cartesian teleop delta
 // from mouse via per-cycle IK, using a PD + Coriolis-compensation
@@ -146,4 +146,4 @@ class JointImpedanceIKController
   Eigen::Quaterniond desired_angular_position_update_quaternion_{Eigen::Quaterniond::Identity()};
 };
 
-}  // namespace franka_arm_controllers
+}  // namespace panda_arm_controller
