@@ -59,43 +59,50 @@ int main (int argc, char** argv)
 		//need two reads to get both x, y, z and roll, pitch, yaw
 		res = hid_read(g_handle, buf, bufSize);
 		res = hid_read(g_handle, buf, bufSize);
+
+		int lin_x, lin_y, lin_z, ang_x, ang_y, ang_z = 0;
 		
 		if (res > 0) {
 			// update x, y, z, roll, pitch, yaw
 			if (buf[0] != 1){
-				mouse_msg.angular.y = (short)(buf[2] << 8) | buf[1];
-				mouse_msg.angular.z = (short)(buf[4] << 8) | buf[3];
-				mouse_msg.angular.x = (short)(buf[6] << 8) | buf[5];
+				ang_y = (short)(buf[2] << 8) | buf[1];
+				ang_z = (short)(buf[4] << 8) | buf[3];
+				ang_x = (short)(buf[6] << 8) | buf[5];
 			} else {
-				mouse_msg.linear.x = (short)(buf[2] << 8) | buf[1];
-				mouse_msg.linear.y = (short)(buf[4] << 8) | buf[3];
-				mouse_msg.linear.z = (short)(buf[6] << 8) | buf[5];
+				lin_x = (short)(buf[2] << 8) | buf[1];
+				lin_y = (short)(buf[4] << 8) | buf[3];
+				lin_z = (short)(buf[6] << 8) | buf[5];
 			}
 
-			if (std::abs(mouse_msg.linear.x) <= 100) {
-				mouse_msg.linear.x = 0;
+			if (std::abs(lin_x) <= 100) {
+				lin_x = 0;
 			}
-			if (std::abs(mouse_msg.linear.y) <= 100) {
-				mouse_msg.linear.y = 0;
+			if (std::abs(lin_y) <= 100) {
+				lin_y = 0;
 			}
-			if (std::abs(mouse_msg.linear.z) <= 100) {
-				mouse_msg.linear.z = 0;
+			if (std::abs(lin_z) <= 100) {
+				lin_z = 0;
 			}
-			if (std::abs(mouse_msg.angular.x) <= 100) {
-				mouse_msg.angular.x = 0;
+			if (std::abs(ang_x) <= 100) {
+				ang_x = 0;
 			}
-			if (std::abs(mouse_msg.angular.y) <= 100) {
-				mouse_msg.angular.y = 0;
+			if (std::abs(ang_y) <= 100) {
+				ang_y = 0;
 			}
-			if (std::abs(mouse_msg.angular.z) <= 100) {
-				mouse_msg.angular.z = 0;
+			if (std::abs(ang_z) <= 100) {
+				ang_z = 0;
 			}
 			
-			// if want to constantly output raw input to console, see below
-			// if (time_counter >= 20.0) {
-			// 	std::cout << "x: " << mouse_msg.linear.x << ", y: " << mouse_msg.linear.y << ", z: " << mouse_msg.linear.z << std::endl;
-			// 	time_counter = 0.0;
-			// }
+			double lin_magnitude = sqrt(pow(lin_x, 2) + pow(lin_y, 2) + pow(lin_z, 2));
+			double ang_magnitude = sqrt(pow(ang_x, 2) + pow(ang_y, 2) + pow(ang_z, 2));
+			
+			mouse_msg.linear.x = lin_x / lin_magnitude;
+			mouse_msg.linear.y = lin_y / lin_magnitude;
+			mouse_msg.linear.z = lin_z / lin_magnitude;
+			mouse_msg.angular.x = ang_x / ang_magnitude;
+			mouse_msg.angular.y = ang_y / ang_magnitude;
+			mouse_msg.angular.z = ang_z / ang_magnitude;
+
 			pub.publish(mouse_msg); // sends msg payload to topic
 		}
 		ros::spinOnce();
