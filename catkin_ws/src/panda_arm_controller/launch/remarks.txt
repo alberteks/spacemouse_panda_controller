@@ -1,0 +1,8 @@
+All running nodes have a graph resource name that uniquely identifies them to the rest of the system. 
+For example, /hokuyo_node could be the name of a Hokuyo driver broadcasting laser scans. 
+Nodes also have a node type, that simplifies the process of referring to a node executable on the fileystem. 
+These node types are package resource names with the name of the node's package and the name of the node executable file. 
+In order to resolve a node type, ROS searches for all executables in the package with the specified name and chooses the first that it finds. 
+As such, you need to be careful and not produce different executables with the same name in the same package.
+- https://wiki.ros.org/Nodes
+
