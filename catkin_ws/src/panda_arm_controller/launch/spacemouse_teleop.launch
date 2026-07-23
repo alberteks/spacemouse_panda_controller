@@ -1,5 +1,5 @@
-<!-- written according to https://wiki.ros.org/roslaunch/XML -->
 <?xml version="1.0"?>
+<!-- written according to https://wiki.ros.org/roslaunch/XML -->
 <launch>
 
     <arg name="robot_ip" default="192.168.1.2" />
