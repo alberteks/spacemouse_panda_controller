@@ -97,9 +97,9 @@ int main (int argc, char** argv)
 			double ang_magnitude = sqrt(pow(ang_x, 2) + pow(ang_y, 2) + pow(ang_z, 2));
 			
 			if (lin_magnitude >= 0.0001) {
-				mouse_msg.linear.x = lin_x / lin_magnitude;
-				mouse_msg.linear.y = lin_y / lin_magnitude;
-				mouse_msg.linear.z = lin_z / lin_magnitude;
+				mouse_msg.linear.x = lin_x / lin_magnitude * 0.01;
+				mouse_msg.linear.y = lin_y / lin_magnitude * 0.01;
+				mouse_msg.linear.z = lin_z / lin_magnitude * 0.01;
 			}
 			else {
 				mouse_msg.linear.x = 0.0;
@@ -108,9 +108,9 @@ int main (int argc, char** argv)
 			}
 
 			if (ang_magnitude >= 0.0001) {
-				mouse_msg.angular.x = ang_x / ang_magnitude;
-				mouse_msg.angular.y = ang_y / ang_magnitude;
-				mouse_msg.angular.z = ang_z / ang_magnitude;
+				mouse_msg.angular.x = ang_x / ang_magnitude * (3.1415926535/18);
+				mouse_msg.angular.y = ang_y / ang_magnitude * (3.1415926535/18);
+				mouse_msg.angular.z = ang_z / ang_magnitude * (3.1415926535/18);
 			}
 			else {
 				mouse_msg.angular.x = 0.0;
