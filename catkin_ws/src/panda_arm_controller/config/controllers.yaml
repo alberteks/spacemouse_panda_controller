@@ -1,33 +1,16 @@
-/**:
-  controller_manager:
-    ros__parameters:
-      update_rate: 1000  # Hz
-
-      joint_state_broadcaster:
-        type: joint_state_broadcaster/JointStateBroadcaster
-
-      franka_robot_state_broadcaster:
-        type: franka_robot_state_broadcaster/FrankaRobotStateBroadcaster
-
-      joint_impedance_ik_controller:
-        type: franka_arm_controllers/JointImpedanceIKController
-
-/**:
-  joint_impedance_ik_controller:
-    ros__parameters:
-      k_gains:
-        - 600.0
-        - 600.0
-        - 600.0
-        - 600.0
-        - 250.0
-        - 150.0
-        - 50.0
-      d_gains:
-        - 30.0
-        - 30.0
-        - 30.0
-        - 30.0
-        - 10.0
-        - 10.0
-        - 5.
+joint_impedance_ik_controller:
+  type: franka_arm_controllers/JointImpedanceIKController
+  arm_id: panda
+  joint_names:
+    - panda_joint1
+    - panda_joint2
+    - panda_joint3
+    - panda_joint4
+    - panda_joint5
+    - panda_joint6
+    - panda_joint7
+  k_gains: [600.0, 600.0, 600.0, 600.0, 250.0, 150.0, 50.0]
+  d_gains: [30.0, 30.0, 30.0, 30.0, 10.0, 10.0, 5.0]
+  max_linear_pos_update: 0.007
+  max_angular_pos_update: 0.03
+  arm_mounting_orientation: [0.0, 0.0, 0.0]
