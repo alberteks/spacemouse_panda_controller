@@ -132,9 +132,6 @@ class JointImpedanceIKController
 
   // --- Cartesian state / teleop targets ---
 
-  Eigen::Vector3d target_position_;
-  Eigen::Quaterniond target_orientation_;
-
   // --- joint-space state ---
 
   std::vector<double> joint_positions_desired_;
