@@ -19,11 +19,6 @@ find_package(Eigen3 REQUIRED)
 find_package(orocos_kdl REQUIRED) 
 
 catkin_package(
-  INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs
-)
-
-catkin_package(
   INCLUDE_DIRS 
     include
   LIBRARIES 
@@ -45,6 +40,10 @@ catkin_package(
     orocos_kdl
 )
 
+install(FILES panda_arm_controllers_plugin.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 # Include header paths
 include_directories(
   include
@@ -54,23 +53,12 @@ include_directories(
 )
 
 # Build the controller shared library
-add_library(${panda_arm_controller}
+add_library(${PROJECT_NAME}
   src/joint_impedance_ik_controller.cpp
 )
 
 # Link dependencies
-target_link_libraries(${panda_arm_controller}
+target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${orocos_kdl_LIBRARIES}
 )
-
-add_executable(panda_controller_node src/joint_impedance_ik_controller.cpp)
-
-target_link_libraries(panda_controller_node
-  ${catkin_LIBRARIES}
-  ${HIDAPI_LIBRARIES}
-)
-
-target_include_directories(panda_controller_node PRIVATE ${HIDAPI_INCLUDE_DIRS})
-
-target_link_directories(panda_controller_node PRIVATE ${HIDAPI_LIBRARY_DIRS})

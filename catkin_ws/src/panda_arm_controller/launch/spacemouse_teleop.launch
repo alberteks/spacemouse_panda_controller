@@ -1,0 +1,24 @@
+<!-- written according to https://wiki.ros.org/roslaunch/XML -->
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="robot_ip" default="192.168.1.2" />
+
+    <!-- Starts franka control node from franka_ros, which is then used to directly communicate with robot -->
+    <include file="$(find franka_control)/launch/franka_control.launch">
+        <arg name="robot_ip" value="$(arg robot_ip)" />
+        <arg name="load_gripper" value="true" />
+    </include>
+
+    <!-- This node will launch on the local machine using the currently configured ROS environment (i.e. ROS_ROOT, etc...). -->
+
+    <!-- start the spacemouse node -->
+    <node name="spacemouse_node" pkg="franka_spacemouse" type="spacemouse_node" />
+    
+    <!-- load controller parameters from config file -->
+    <rosparam command="load" file="$(find panda_arm_controller)/config/controllers.yaml" />
+    
+    <!-- load controller as plugin into controller_manager created by franka_control.launch -->
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_impedance_ik_controller" output="screen" />
+
+</launch>

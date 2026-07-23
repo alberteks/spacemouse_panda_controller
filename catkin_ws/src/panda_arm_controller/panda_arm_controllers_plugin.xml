@@ -1,4 +1,4 @@
-<library path="lib/libfranka_arm_controllers">
+<library path="lib/libpanda_arm_controller">
     <class name="franka_arm_controllers/JointImpedanceIKController"
         type="franka_arm_controllers::JointImpedanceIKController"
         base_class_type="controller_interface::ControllerBase">
