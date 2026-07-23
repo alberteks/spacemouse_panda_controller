@@ -275,7 +275,7 @@ bool JointImpedanceIKController::solveIK(const Eigen::Vector3d& new_position,
 
   for (int i = 0; i < kNumJoints; ++i) {
     //joint_positions_desired_[i] = q_result_(i);
-    joint_handles_[i].setCommand(0.0);
+    joint_positions_desired_[i] = joint_positions_current_[i];
   }
   ROS_INFO_THROTTLE(1.0,
     "\n--- [IK & TORQUE COMMANDS] ---\n"
