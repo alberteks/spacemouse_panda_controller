@@ -42,6 +42,6 @@
   <depend>dynamic_reconfigure</depend>
 
   <export>
-    <controller_interface plugin="${prefix}/franka_arm_controllers_plugin.xml" />
+    <controller_interface plugin="${prefix}/panda_arm_controllers_plugin.xml" />
   </export>
 </package>
