@@ -96,12 +96,27 @@ int main (int argc, char** argv)
 			double lin_magnitude = sqrt(pow(lin_x, 2) + pow(lin_y, 2) + pow(lin_z, 2));
 			double ang_magnitude = sqrt(pow(ang_x, 2) + pow(ang_y, 2) + pow(ang_z, 2));
 			
-			mouse_msg.linear.x = lin_x / lin_magnitude;
-			mouse_msg.linear.y = lin_y / lin_magnitude;
-			mouse_msg.linear.z = lin_z / lin_magnitude;
-			mouse_msg.angular.x = ang_x / ang_magnitude;
-			mouse_msg.angular.y = ang_y / ang_magnitude;
-			mouse_msg.angular.z = ang_z / ang_magnitude;
+			if (lin_magnitude != 0.0) {
+				mouse_msg.linear.x = lin_x / lin_magnitude;
+				mouse_msg.linear.y = lin_y / lin_magnitude;
+				mouse_msg.linear.z = lin_z / lin_magnitude;
+			}
+			else {
+				mouse_msg.linear.x = 0.0;
+				mouse_msg.linear.y = 0.0;
+				mouse_msg.linear.z = 0.0;
+			}
+
+			if (ang_magnitude != 0.0) {
+				mouse_msg.angular.x = ang_x / ang_magnitude;
+				mouse_msg.angular.y = ang_y / ang_magnitude;
+				mouse_msg.angular.z = ang_z / ang_magnitude;
+			}
+			else {
+				mouse_msg.angular.x = 0.0;
+				mouse_msg.angular.y = 0.0;
+				mouse_msg.angular.z = 0.0;
+			}
 
 			pub.publish(mouse_msg); // sends msg payload to topic
 		}
