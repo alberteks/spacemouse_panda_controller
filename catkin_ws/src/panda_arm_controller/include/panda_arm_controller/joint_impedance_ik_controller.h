@@ -68,7 +68,7 @@ class JointImpedanceIKController
   // On failure, logs and leaves joint_positions_desired_ at its last value
   // rather than throwing, so a transient IK failure holds position instead
   // of aborting the real-time control loop.
-  void solveIK(const Eigen::Vector3d& new_position, const Eigen::Quaterniond& new_orientation);
+  bool solveIK(const Eigen::Vector3d& new_position, const Eigen::Quaterniond& new_orientation);
 
   // Subscriber callback: converts an incoming Twist into a small per-cycle
   // Cartesian position/orientation delta (see max_linear_pos_update_ /
@@ -127,8 +127,8 @@ class JointImpedanceIKController
   KDL::JntArray q_result_;
 //Takes load off of the loop (i guess?)
   std::unique_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_;
-  std::unique_ptr<KDL::ChainIkSolverVel_pinv> ik_vel_solver_;
-  std::unique_ptr<KDL::ChainIkSolverPos_NR_JL> ik_pos_solver_;
+  std::unique_ptr<KDL::ChainIkSolverVel_pinv> vel_solver_;
+  std::unique_ptr<KDL::ChainIkSolverPos_NR_JL> ik_solver_;
 
   // --- Cartesian state / teleop targets ---
 
@@ -141,6 +141,12 @@ class JointImpedanceIKController
   std::vector<double> joint_positions_current_;
   std::vector<double> joint_velocities_current_;
   std::vector<double> joint_efforts_current_;
+  Eigen::Vector3d target_position_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond target_orientation_{Eigen::Quaterniond::Identity()};
+
+  Eigen::Vector3d desired_linear_position_update_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d desired_angular_position_update_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond desired_angular_position_update_quaternion_{Eigen::Quaterniond::Identity()};
 };
 
 }  // namespace franka_arm_controllers
