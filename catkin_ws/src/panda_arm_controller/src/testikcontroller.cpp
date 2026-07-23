@@ -1,4 +1,4 @@
-#include <franka_arm_controllers/joint_impedance_ik_controller.h>
+#include <panda_arm_controller/joint_impedance_ik_controller.h>
 
 #include <pluginlib/class_list_macros.h>
 
