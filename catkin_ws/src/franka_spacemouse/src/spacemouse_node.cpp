@@ -2,6 +2,7 @@
 #include <hidapi.h>
 #include <cmath>
 #include <iostream>
+#include <algorithm> // for clamping
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
@@ -33,15 +34,15 @@ void closeSpacemouse() {
 }
 
 double inputToOutput(double input, double input_start, double input_end, double output_start, double output_end){
-	double slope = 1.0 * (output_end - output_start) / (input_end - input_start);
-	double output;
+	double sign = 1.0;
 	if (input < 0.0) {
-		output = -1.0 * (output_start + slope * (std::abs(input) - input_start))
+		sign = -1.0; 
 	}
-	else{
-		output = output_start + slope * (input - input_start);
-	}
-	return output;
+	double abs_input = std::abs(input);
+	double slope = (output_end - output_start) / (input_end - input_start);
+	double output = output_start + slope * (abs_input - input_start);
+	output = std::clamp(output, output_start, output_end); // clamp values to only output range in case of noisy mouse input
+	return sign * output;
 }
 
 int main(int argc, char** argv)
