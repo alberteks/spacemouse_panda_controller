@@ -82,26 +82,27 @@ int main(int argc, char** argv)
 		bool leftButton = false;
 		bool rightButton = false;
 		
-		//need 3 reads to get both x, y, z and roll, pitch, yaw
-		for (int i = 0; i<3; i++){
-			res = hid_read(g_handle, buf, bufSize);
-			if (res==0){ i--; continue;} //repeat if unsucessful read
+		//get either (x, y, z and roll, pitch, yaw) or (buttons)
 
-			if (buf[0] == 2){
-				ang_x = (short)(buf[2] << 8) | buf[1];
-				ang_y = (short)(buf[4] << 8) | buf[3];
-				ang_z = (short)(buf[6] << 8) | buf[5];
-			} else if (buf[0]==1) {
-				lin_x = (short)(buf[2] << 8) | buf[1];
-				lin_y = (short)(buf[4] << 8) | buf[3];
-				lin_z = (short)(buf[6] << 8) | buf[5];
-			} else {
-				leftButton = buf[1]&1;	//get right bit
-				rightButton = (buf[1]>>1)&1;	//get left bit
-			}
-		}
+		res = hid_read(g_handle, buf, bufSize);
+		if (res==0) continue; //do nothing if there is no report
 
-		printf("L:%b, R:%b\n",leftButton,rightButton);
+		int reportID = buf[0];
+		if (reportID==1){ //if it is position report
+
+			ang_x = (short)(buf[2] << 8) | buf[1];
+			ang_y = (short)(buf[4] << 8) | buf[3];
+			ang_z = (short)(buf[6] << 8) | buf[5];
+
+			while (hid_read(g_handle, buf, bufSize)==0){}; //get orientation report, since pos and ori come as a pair always.
+
+			lin_x = (short)(buf[2] << 8) | buf[1];
+			lin_y = (short)(buf[4] << 8) | buf[3];
+			lin_z = (short)(buf[6] << 8) | buf[5];
+
+			//printf("%i %i %i\n",ang_x,ang_y,ang_z);
+			//printf("%i %i %i\n",lin_x,lin_y,lin_z);
+		//
 
 			// update x, y, z, roll, pitch, yaw
 
@@ -146,6 +147,19 @@ int main(int argc, char** argv)
 			}
 
 			pub.publish(mouse_msg); // sends msg payload to topic
+
+		} else if (reportID==3){ //if it is button report
+
+			leftButton = buf[1]&1;	//get right bit
+			rightButton = (buf[1]>>1)&1;	//get left bit
+			//printf("L:%i, R:%i\n",leftButton,rightButton);
+
+			
+
+		}
+
+
+
 		
 		ros::spinOnce();
 		rate.sleep(); // sleep so that we poll at defined rate (100 Hz)
