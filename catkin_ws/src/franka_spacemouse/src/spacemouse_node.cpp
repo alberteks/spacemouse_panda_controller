@@ -6,6 +6,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Bool.h>
 
 static hid_device* g_handle = nullptr;
 int res;
@@ -52,7 +53,9 @@ int main(int argc, char** argv)
 
 	// define topic name that node publishes to. then, controller will subscribe to this exact topic--only thing linking the two given decoupling setup in ros
 	ros::Publisher pub = nh.advertise<geometry_msgs::Twist>("spacemouse/twist", 1); // args are name of topic, queue size
-	
+	ros::Publisher gripper_close_pub = nh.advertise<std_msgs::Bool>("/spacemouse/gripper_close_held", 1);
+	ros::Publisher gripper_open_pub = nh.advertise<std_msgs::Bool>("/spacemouse/gripper_open_held", 1);	
+
 	if (!initSpacemouse()) { // initialize spacemouse for reading; if not accessible then exit process
         std::cerr << "Failed to lock HID descriptors. Exiting." << std::endl;
         return -1;
@@ -75,7 +78,8 @@ int main(int argc, char** argv)
 	while (ros::ok()){
 		// time_counter+=1;
 		geometry_msgs::Twist mouse_msg; // twist struct has linear and angular 3d vectors
-
+		std_msgs::Bool open_msg;
+		std_msgs::Bool close_msg;
 		
 		int lin_x, lin_y, lin_z, ang_x, ang_y, ang_z = 0;
 		
@@ -149,18 +153,13 @@ int main(int argc, char** argv)
 			pub.publish(mouse_msg); // sends msg payload to topic
 
 		} else if (reportID==3){ //if it is button report
-
 			leftButton = buf[1]&1;	//get right bit
+			open_msg.data = leftButton; // left button opens gripper
+			gripper_open_pub.publish(open_msg);
 			rightButton = (buf[1]>>1)&1;	//get left bit
-			//printf("L:%i, R:%i\n",leftButton,rightButton);
-
-			
-
+			close_msg.data = rightButton; // right button closes gripper 
+			gripper_close_pub.publish(close_msg);
 		}
-
-
-
-		
 		ros::spinOnce();
 		rate.sleep(); // sleep so that we poll at defined rate (100 Hz)
 	}

@@ -152,19 +152,24 @@ class JointImpedanceIKController
   Eigen::Quaterniond desired_angular_position_update_quaternion_{Eigen::Quaterniond::Identity()};
 
   // --- for gripper ---
-  using GripperMoveClient = actionlib::SimpleActionClient<franka_gripper::MoveAction>;
-  using GripperClaspClient = actionlib::SimpleActionClient<franka_gripper::GraspAction>;
-  using GripperHomingClient = actionlib::SimpleActionClient<franka_gripper::HomingAction>;
+  using GripperMoveClient = actionlib::SimpleActionClient<franka_gripper::MoveAction>; // moves gripper
+  using GripperGraspClient = actionlib::SimpleActionClient<franka_gripper::GraspAction>; // enables gripper to close w force at end
+  using GripperHomingClient = actionlib::SimpleActionClient<franka_gripper::HomingAction>; // homes gripper at start
 
-  std::unique_ptr<GripperMoveClient> gripper_move_client_; // move client opens fingers
-  std::unique_ptr<GripperGraspClient> gripper_grasp_client_; // grasp client closes fingers
-  std::unique_ptr<GripperHomingClient> gripper_homing_client_; // homing calibrates baseline pos for gripper
+  std::unique_ptr<GripperMoveClient> gripper_move_client_;
+  std::unique_ptr<GripperGraspClient> gripper_grasp_client_;   // kept for optional final-grip-force step
+  std::unique_ptr<GripperHomingClient> gripper_homing_client_;
 
-  // gripper subscriber and tracker setup
-  ros::Subscriber gripper_sub_;
-  bool gripper_closed_ = false;
+  ros::Subscriber gripper_close_sub_;
+  ros::Subscriber gripper_open_sub_;
+  ros::Timer gripper_timer_;
 
-  void gripperCallback(const std_msgs::BoolConstPtr& msg); // gripper callback method
+  bool gripper_close_held_ = false;
+  bool gripper_open_held_ = false;
+  double current_gripper_width_ = 0.08;
+
+  void gripperCloseCallback(const std_msgs::BoolConstPtr& msg);
+  void gripperOpenCallback(const std_msgs::BoolConstPtr& msg);
+  void gripperTimerCallback(const ros::TimerEvent&);
 };
-
 }  // namespace panda_arm_controller

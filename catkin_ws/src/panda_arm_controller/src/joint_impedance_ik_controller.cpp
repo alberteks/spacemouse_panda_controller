@@ -172,9 +172,15 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
   franka_gripper::HomingGoal homing_goal;
   gripper_homing_client_->sendGoalAndWait(homing_goal, ros::Duration(15.0));
 
-  // --- Spacemouse input for gripper; false is open gripper, true is closed gripper ---
-  gripper_sub_ = node_handle.subscribe(
-    "/spacemouse/gripper_close", 1, &JointImpedanceIKController::gripperCallback, this);
+  // --- Spacemouse input for gripper--hold close button to close, open button to open
+  gripper_close_sub_ = node_handle.subscribe(
+    "/spacemouse/gripper_close_held", 1, &JointImpedanceIKController::gripperCloseCallback, this);
+  gripper_open_sub_ = node_handle.subscribe(
+    "/spacemouse/gripper_open_held", 1, &JointImpedanceIKController::gripperOpenCallback, this);
+
+  // ensures that gripper motion runs independently of the 1kHz update() loop (on 10hz)
+  gripper_timer_ = node_handle.createTimer(
+    ros::Duration(0.1), &JointImpedanceIKController::gripperTimerCallback, this);
 
   // Properly initialize fixed-size joint vectors
   joint_positions_desired_.assign(kNumJoints, 0.0);
@@ -333,29 +339,37 @@ void JointImpedanceIKController::spacemouseCallback(const geometry_msgs::TwistCo
 }
 
 // ---------------------------------------------------------------------------
-// gripperCallback()
+// gripper callback functions
 // ---------------------------------------------------------------------------
-void JointImpedanceIKController::gripperCallback(const std_msgs::BoolConstPtr& msg) {
-  bool want_closed = msg->data;
-  if (want_closed == gripper_closed_) {
-    return;
-  }
-  gripper_closed_ = want_closed;
+// read close command data
+void JointImpedanceIKController::gripperCloseCallback(const std_msgs::BoolConstPtr& msg) {
+  gripper_close_held_ = msg->data;
+}
 
-  if (want_closed) { // close gripper if we want it closed
-    franka_gripper::GraspGoal goal;
-    goal.width = 0.0;
-    goal.speed = 0.1;
-    goal.force = 20.0;
-    goal.epsilon_inner = 0.005;
-    goal.epsilon_outer = 0.03;
-    gripper_grasp_client_->sendGoal(goal);
-  } else { // open gripper if we want it open
-    franka_gripper::MoveGoal goal;
-    goal.width = 0.08;
-    goal.speed = 0.1;
-    gripper_move_client_->sendGoal(goal);
+// read open command data
+void JointImpedanceIKController::gripperOpenCallback(const std_msgs::BoolConstPtr& msg) {
+  gripper_open_held_ = msg->data;
+}
+
+// main callback for gripper. sendgoal is on 10hz (every 0.1 s)
+void JointImpedanceIKController::gripperTimerCallback(const ros::TimerEvent&) {
+  if (!gripper_close_held_ && !gripper_open_held_) {
+    return;  // nothing held, so don't do anything
   }
+
+  const double kStepPerTick = 0.001;  // meters per 0.1s tick, tune to taste (~1cm/sec)
+
+  if (gripper_close_held_) { // if close button held down, move gripper to close position
+    current_gripper_width_ -= kStepPerTick;
+  } else if (gripper_open_held_) {
+    current_gripper_width_ += kStepPerTick;
+  }
+  current_gripper_width_ = std::clamp(current_gripper_width_, 0.0, 0.08);
+
+  franka_gripper::MoveGoal goal;
+  goal.width = current_gripper_width_;
+  goal.speed = 0.1;
+  gripper_move_client_->sendGoal(goal);
 }
 
 // ---------------------------------------------------------------------------
