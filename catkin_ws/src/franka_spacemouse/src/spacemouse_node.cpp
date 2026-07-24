@@ -76,24 +76,35 @@ int main(int argc, char** argv)
 		// time_counter+=1;
 		geometry_msgs::Twist mouse_msg; // twist struct has linear and angular 3d vectors
 
-		//need two reads to get both x, y, z and roll, pitch, yaw
-		res = hid_read(g_handle, buf, bufSize);
-		//res = hid_read(g_handle, buf, bufSize);
-
+		
 		int lin_x, lin_y, lin_z, ang_x, ang_y, ang_z = 0;
 		
-		if (res > 0) {
-			printf("%i",buf[0]);
-			// update x, y, z, roll, pitch, yaw
-			if (buf[0] != 1){
+		bool leftButton = false;
+		bool rightButton = false;
+		
+		//need 3 reads to get both x, y, z and roll, pitch, yaw
+		for (int i = 0; i<3; i++){
+			res = hid_read(g_handle, buf, bufSize);
+			if (res==0){ i--; continue;} //repeat if unsucessful read
+
+			if (buf[0] == 2){
 				ang_x = (short)(buf[2] << 8) | buf[1];
 				ang_y = (short)(buf[4] << 8) | buf[3];
 				ang_z = (short)(buf[6] << 8) | buf[5];
-			} else {
+			} else if (buf[0]==1) {
 				lin_x = (short)(buf[2] << 8) | buf[1];
 				lin_y = (short)(buf[4] << 8) | buf[3];
 				lin_z = (short)(buf[6] << 8) | buf[5];
+			} else {
+				leftButton = buf[1]&1;	//get right bit
+				rightButton = (buf[1]>>1)&1;	//get left bit
 			}
+		}
+
+		printf("L:%b, R:%b\n",leftButton,rightButton);
+
+			// update x, y, z, roll, pitch, yaw
+
 
 			lin_z *= -1; // flip z axis so up is + and down is -
 
@@ -135,7 +146,7 @@ int main(int argc, char** argv)
 			}
 
 			pub.publish(mouse_msg); // sends msg payload to topic
-		}
+		
 		ros::spinOnce();
 		rate.sleep(); // sleep so that we poll at defined rate (100 Hz)
 	}
