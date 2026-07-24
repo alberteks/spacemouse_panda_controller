@@ -1,4 +1,4 @@
-prefix=/home/bert/catkin_ws_link/devel
+prefix=/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/devel
 
 Name: franka_spacemouse
 Description: Description of franka_spacemouse

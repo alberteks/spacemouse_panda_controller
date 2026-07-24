@@ -1,6 +1,6 @@
 <library path="lib/libpanda_arm_controller">
-    <class name="franka_arm_controllers/JointImpedanceIKController"
-        type="franka_arm_controllers::JointImpedanceIKController"
+    <class name="panda_arm_controller/JointImpedanceIKController"
+        type="panda_arm_controller::JointImpedanceIKController"
         base_class_type="controller_interface::ControllerBase">
         <description>
             Joint impedance controller with Cartesian-delta IK for single-arm

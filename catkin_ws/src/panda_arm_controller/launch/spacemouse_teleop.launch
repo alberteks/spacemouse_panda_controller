@@ -2,7 +2,7 @@
 <!-- written according to https://wiki.ros.org/roslaunch/XML -->
 <launch>
 
-    <arg name="robot_ip" default="192.168.1.2" />
+    <arg name="robot_ip" default="192.168.1.5" />
 
     <!-- Starts franka control node from franka_ros, which is then used to directly communicate with robot -->
     <include file="$(find franka_control)/launch/franka_control.launch">

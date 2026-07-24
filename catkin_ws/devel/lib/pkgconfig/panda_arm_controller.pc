@@ -1,8 +1,8 @@
-prefix=/home/bert/catkin_ws_link/devel
+prefix=/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/devel
 
 Name: panda_arm_controller
 Description: Description of panda_arm_controller
 Version: 0.1.0
-Cflags: -I/home/bert/catkin_ws_link/src/panda_arm_controller/include
-Libs: -L${prefix}/lib 
-Requires: roscpp std_msgs
+Cflags: -I/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/src/panda_arm_controller/include -I/usr/share/orocos_kdl/cmake/../../../include -I/usr/include/eigen3
+Libs: -L${prefix}/lib -lpanda_arm_controller -lorocos-kdl
+Requires: controller_interface hardware_interface pluginlib franka_hw franka_msgs roscpp geometry_msgs realtime_tools tf2 urdf kdl_parser
