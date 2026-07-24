@@ -29,6 +29,12 @@
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainiksolverpos_nr_jl.hpp>
 
+#include <actionlib/client/simple_action_client.h>
+#include <franka_gripper/MoveAction.h>
+#include <franka_gripper/GraspAction.h>
+#include <franka_gripper/HomingAction.h>
+#include <std_msgs/Bool.h>
+
 #include <Eigen/Dense>
 
 namespace panda_arm_controller {
@@ -144,6 +150,21 @@ class JointImpedanceIKController
   Eigen::Vector3d desired_linear_position_update_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d desired_angular_position_update_{Eigen::Vector3d::Zero()};
   Eigen::Quaterniond desired_angular_position_update_quaternion_{Eigen::Quaterniond::Identity()};
+
+  // --- for gripper ---
+  using GripperMoveClient = actionlib::SimpleActionClient<franka_gripper::MoveAction>;
+  using GripperClaspClient = actionlib::SimpleActionClient<franka_gripper::GraspAction>;
+  using GripperHomingClient = actionlib::SimpleActionClient<franka_gripper::HomingAction>;
+
+  std::unique_ptr<GripperMoveClient> gripper_move_client_; // move client opens fingers
+  std::unique_ptr<GripperGraspClient> gripper_grasp_client_; // grasp client closes fingers
+  std::unique_ptr<GripperHomingClient> gripper_homing_client_; // homing calibrates baseline pos for gripper
+
+  // gripper subscriber and tracker setup
+  ros::Subscriber gripper_sub_;
+  bool gripper_closed_ = false;
+
+  void gripperCallback(const std_msgs::BoolConstPtr& msg); // gripper callback method
 };
 
 }  // namespace panda_arm_controller
