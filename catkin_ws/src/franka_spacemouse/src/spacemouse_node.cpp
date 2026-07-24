@@ -58,11 +58,12 @@ int main (int argc, char** argv)
 
 		//need two reads to get both x, y, z and roll, pitch, yaw
 		res = hid_read(g_handle, buf, bufSize);
-		res = hid_read(g_handle, buf, bufSize);
+		//res = hid_read(g_handle, buf, bufSize);
 
 		int lin_x, lin_y, lin_z, ang_x, ang_y, ang_z = 0;
 		
 		if (res > 0) {
+			printf("%i",buf[0]);
 			// update x, y, z, roll, pitch, yaw
 			if (buf[0] != 1){
 				ang_y = (short)(buf[2] << 8) | buf[1];
