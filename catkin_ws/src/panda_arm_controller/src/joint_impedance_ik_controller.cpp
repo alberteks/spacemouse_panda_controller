@@ -157,6 +157,25 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
   spacemouse_sub_ = node_handle.subscribe(
       "/spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
 
+  // gripper client definitions
+  gripper_move_client_ = std::make_unique<GripperMoveClient>("franka_gripper/move", true);
+  gripper_grasp_client_ = std::make_unique<GripperGraspClient>("franka_gripper/grasp", true);
+  gripper_homing_client_ = std::make_unique<GripperHomingClient>("franka_gripper/homing", true);
+
+  // if can't connect to gripper, throw error
+  if (!gripper_move_client_->waitForServer(ros::Duration(5.0)) || !gripper_grasp_client_->waitForServer(ros::Duration(5.0)) || !gripper_homing_client_->waitForServer(ros::Duration(5.0))) {
+    ROS_ERROR("JointImpedanceIKController: gripper action servers not available");
+    return false;
+  }
+
+  // home gripper once at startup
+  franka_gripper::HomingGoal homing_goal;
+  gripper_homing_client_->sendGoalAndWait(homing_goal, ros::Duration(15.0));
+
+  // --- Spacemouse input for gripper; false is open gripper, true is closed gripper ---
+  gripper_sub_ = node_handle.subscribe(
+    "/spacemouse/gripper_close", 1, &JointImpedanceIKController::gripperCallback, this);
+
   // Properly initialize fixed-size joint vectors
   joint_positions_desired_.assign(kNumJoints, 0.0);
   joint_positions_current_.assign(kNumJoints, 0.0);
@@ -311,6 +330,32 @@ void JointImpedanceIKController::spacemouseCallback(const geometry_msgs::TwistCo
   Eigen::AngleAxisd pitch_angle(desired_angular_position_update_.y(), Eigen::Vector3d::UnitY());
   Eigen::AngleAxisd yaw_angle(desired_angular_position_update_.z(), Eigen::Vector3d::UnitZ());
   desired_angular_position_update_quaternion_ = yaw_angle * pitch_angle * roll_angle;
+}
+
+// ---------------------------------------------------------------------------
+// gripperCallback()
+// ---------------------------------------------------------------------------
+void JointImpedanceIKController::gripperCallback(const std_msgs::BoolConstPtr& msg) {
+  bool want_closed = msg->data;
+  if (want_closed == gripper_closed_) {
+    return;
+  }
+  gripper_closed_ = want_closed;
+
+  if (want_closed) { // close gripper if we want it closed
+    franka_gripper::GraspGoal goal;
+    goal.width = 0.0;
+    goal.speed = 0.1;
+    goal.force = 20.0;
+    goal.epsilon_inner = 0.005;
+    goal.epsilon_outer = 0.03;
+    gripper_grasp_client_->sendGoal(goal);
+  } else { // open gripper if we want it open
+    franka_gripper::MoveGoal goal;
+    goal.width = 0.08;
+    goal.speed = 0.1;
+    gripper_move_client_->sendGoal(goal);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -6,7 +6,7 @@
     ROS1 port of frankaspacemouse, a set of ros_control controllers
     driven by SpaceMouse teleop input, for Franka arms via ros_control.
   </description>
-  <maintainer email="dengd@wustl.edu">dmdeng1150</maintainer> <!-- apparently this is needed? idk lmao-->
+  <maintainer email="dengd@wustl.edu">dmdeng1150</maintainer>
   <license>Apache-2.0</license>
   <buildtool_depend>catkin</buildtool_depend> <!-- amentcmake to catkin for ROS1-->
 
@@ -37,6 +37,9 @@
   <!-- Messages used by the SpaceMouse input topic -->
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
+
+  <!-- Actionlib stack provides interface for tasks which need feedback as they occur -->
+  <depend>actionlib</depend>
 
   <!-- Dynamic reconfigure for live gain tuning -->
   <depend>dynamic_reconfigure</depend>

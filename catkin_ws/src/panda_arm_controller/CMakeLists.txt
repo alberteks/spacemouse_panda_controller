@@ -7,6 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   pluginlib
   franka_hw
   franka_msgs
+  franka_gripper
+  actionlib
   roscpp
   geometry_msgs
   realtime_tools
@@ -29,6 +31,8 @@ catkin_package(
     pluginlib
     franka_hw
     franka_msgs
+    franka_gripper
+    actionlib
     roscpp
     geometry_msgs
     realtime_tools
