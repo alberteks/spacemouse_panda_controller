@@ -34,7 +34,13 @@ void closeSpacemouse() {
 
 double inputToOutput(double input, double input_start, double input_end, double output_start, double output_end){
 	double slope = 1.0 * (output_end - output_start) / (input_end - input_start);
-	double output = output_start + slope * (input - input_start);
+	double output;
+	if (input < 0.0) {
+		output = -1.0 * (output_start + slope * (std::abs(input) - input_start))
+	}
+	else{
+		output = output_start + slope * (input - input_start);
+	}
 	return output;
 }
 
@@ -58,7 +64,7 @@ int main(int argc, char** argv)
 	unsigned char buf[bufSize];
 
 	double input_start = 100.0; // lowest raw mouse value we register
-	double input_end = 360.0;  // highest raw mouse value it is possible to register
+	double input_end = 350.0;  // highest raw mouse value it is possible to register
 	double output_start_lin = 0.0; // beginning of linear range we convert mouse values to
 	double output_end_lin = 0.02; // end of linear range we convert mouse values to (2 cm)
 	double output_start_ang = 0.0; // beginning of angular range we convert mouse values to
