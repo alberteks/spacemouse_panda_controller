@@ -90,30 +90,41 @@ int main(int argc, char** argv)
 			lin_z *= -1; // flip z axis so up is + and down is -
 
 			if (std::abs(lin_x) <= 100) {
-				lin_x = 0;
+				mouse_msg.linear.x = 0;
+			}
+			else{
+				mouse_msg.linear.x = inputToOutput(lin_x, input_start, input_end, output_start_lin, output_end_lin);
 			}
 			if (std::abs(lin_y) <= 100) {
-				lin_y = 0;
+				mouse_msg.linear.y = 0;
+			}
+			else{
+				mouse_msg.linear.y = inputToOutput(lin_y, input_start, input_end, output_start_lin, output_end_lin);
 			}
 			if (std::abs(lin_z) <= 100) {
-				lin_z = 0;
+				mouse_msg.linear.z = 0;
+			}
+			else{
+				mouse_msg.linear.z = inputToOutput(lin_z, input_start, input_end, output_start_lin, output_end_lin);
 			}
 			if (std::abs(ang_x) <= 100) {
-				ang_x = 0;
+				mouse_msg.angular.x = 0;
+			}
+			else{
+				mouse_msg.angular.x = inputToOutput(ang_x, input_start, input_end, output_start_ang, output_end_ang);
 			}
 			if (std::abs(ang_y) <= 100) {
-				ang_y = 0;
+				mouse_msg.angular.y = 0;
+			}
+			else{
+				mouse_msg.angular.y = inputToOutput(ang_y, input_start, input_end, output_start_ang, output_end_ang);
 			}
 			if (std::abs(ang_z) <= 100) {
-				ang_z = 0;
+				mouse_msg.angular.z = 0;
 			}
-			
-			mouse_msg.linear.x = inputToOutput(lin_x, input_start, input_end, output_start_lin, output_end_lin);
-			mouse_msg.linear.y = inputToOutput(lin_y, input_start, input_end, output_start_lin, output_end_lin);
-			mouse_msg.linear.z = inputToOutput(lin_z, input_start, input_end, output_start_lin, output_end_lin);
-			mouse_msg.angular.x = inputToOutput(ang_x, input_start, input_end, output_start_ang, output_end_ang);
-			mouse_msg.angular.y = inputToOutput(ang_y, input_start, input_end, output_start_ang, output_end_ang);
-			mouse_msg.angular.z = inputToOutput(ang_z, input_start, input_end, output_start_ang, output_end_ang);
+			else{
+				mouse_msg.angular.z = inputToOutput(ang_z, input_start, input_end, output_start_ang, output_end_ang);
+			}
 
 			pub.publish(mouse_msg); // sends msg payload to topic
 		}
