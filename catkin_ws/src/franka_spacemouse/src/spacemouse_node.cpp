@@ -108,9 +108,9 @@ int main (int argc, char** argv)
 			}
 
 			if (ang_magnitude >= 0.0001) {
-				mouse_msg.angular.x = ang_x / ang_magnitude * (3.1415926535/18);
-				mouse_msg.angular.y = ang_y / ang_magnitude * (3.1415926535/18);
-				mouse_msg.angular.z = ang_z / ang_magnitude * (3.1415926535/18);
+				mouse_msg.angular.x = ang_x / ang_magnitude * (3.1415926535/360);
+				mouse_msg.angular.y = ang_y / ang_magnitude * (3.1415926535/360);
+				mouse_msg.angular.z = ang_z / ang_magnitude * (3.1415926535/360);
 			}
 			else {
 				mouse_msg.angular.x = 0.0;

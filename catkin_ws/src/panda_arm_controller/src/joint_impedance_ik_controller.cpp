@@ -155,7 +155,7 @@ bool JointImpedanceIKController::init(hardware_interface::RobotHW* robot_hw,
 
   // --- SpaceMouse input ---
   spacemouse_sub_ = node_handle.subscribe(
-      "spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
+      "/spacemouse/twist", 1, &JointImpedanceIKController::spacemouseCallback, this);
 
   // Properly initialize fixed-size joint vectors
   joint_positions_desired_.assign(kNumJoints, 0.0);
@@ -189,7 +189,7 @@ void JointImpedanceIKController::starting(const ros::Time& /*time*/) {
   target_position_ = transform.translation();
   target_orientation_ = Eigen::Quaterniond(transform.linear());
 
-  ROS_INFO_STREAM_THROTTLE(5, "target_position_ = " << target_position_);
+  ROS_INFO_STREAM_THROTTLE(5, "target_position_ = " << target_position_.transpose());
 }
 
 // ---------------------------------------------------------------------------
@@ -198,6 +198,8 @@ void JointImpedanceIKController::starting(const ros::Time& /*time*/) {
 void JointImpedanceIKController::update(const ros::Time& /*time*/,
                                          const ros::Duration& /*period*/) {
   updateJointStates();
+
+  franka::RobotState current_robot_state = state_handle_->getRobotState();
 
   // Propose updated target Cartesian pose
   Eigen::Vector3d new_position = target_position_ + desired_linear_position_update_;
@@ -217,8 +219,15 @@ void JointImpedanceIKController::update(const ros::Time& /*time*/,
   Vector7d q_current(joint_positions_current_.data());
   Vector7d dq_current(joint_velocities_current_.data());
 
-  ROS_INFO_STREAM_THROTTLE(5, "q_desired = " << q_desired);
-  ROS_INFO_STREAM_THROTTLE(5, "q_current = " << q_current);
+  // ROS_INFO_STREAM_THROTTLE(5, "q_desired = " << q_desired.transpose());
+  // ROS_INFO_STREAM_THROTTLE(5, "q_current = " << q_current.transpose());
+
+  ROS_INFO_STREAM_THROTTLE(5, "desired_linear_position_update_ = " << desired_linear_position_update_.transpose());
+  ROS_INFO_STREAM_THROTTLE(5, "desired_angular_position_update_ = " << desired_angular_position_update_.transpose());
+
+  Eigen::Affine3d transform(Eigen::Matrix4d::Map(current_robot_state.O_T_EE.data()));
+  ROS_INFO_STREAM_THROTTLE(5, "new_position = " << new_position.transpose());
+  ROS_INFO_STREAM_THROTTLE(5, "cur_position = " << transform.translation().transpose());
 
   Vector7d tau_d = computeTorqueCommand(q_desired, q_current, dq_current);
 
@@ -253,7 +262,7 @@ JointImpedanceIKController::Vector7d JointImpedanceIKController::computeTorqueCo
   Vector7d q_error = q_desired - q_current;
   Vector7d tau_d = k_gains_.cwiseProduct(q_error) - d_gains_.cwiseProduct(dq_filtered_) + coriolis;
 
-  ROS_INFO_STREAM_THROTTLE(5, "q_error = "<< q_error);
+  ROS_INFO_STREAM_THROTTLE(5, "q_error = "<< q_error.transpose());
 
   return tau_d;
 }

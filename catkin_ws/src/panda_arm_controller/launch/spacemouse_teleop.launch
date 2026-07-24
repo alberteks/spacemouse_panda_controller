@@ -13,7 +13,7 @@
     <!-- This node will launch on the local machine using the currently configured ROS environment (i.e. ROS_ROOT, etc...). -->
 
     <!-- start the spacemouse node -->
-    <!-- <node name="spacemouse_node" pkg="franka_spacemouse" type="spacemouse_node" /> -->
+    <node name="spacemouse_node" pkg="franka_spacemouse" type="spacemouse_node" />
     
     <!-- load controller parameters from config file -->
     <rosparam command="load" file="$(find panda_arm_controller)/config/controllers.yaml" />

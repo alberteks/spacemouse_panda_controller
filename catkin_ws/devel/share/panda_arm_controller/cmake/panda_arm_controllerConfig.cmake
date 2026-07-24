@@ -67,14 +67,14 @@ set(panda_arm_controller_CONFIG_INCLUDED TRUE)
 
 # set variables for source/devel/install prefixes
 if("TRUE" STREQUAL "TRUE")
-  set(panda_arm_controller_SOURCE_PREFIX /home/bert/catkin_ws_link/src/panda_arm_controller)
-  set(panda_arm_controller_DEVEL_PREFIX /home/bert/catkin_ws_link/devel)
+  set(panda_arm_controller_SOURCE_PREFIX /home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/src/panda_arm_controller)
+  set(panda_arm_controller_DEVEL_PREFIX /home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/devel)
   set(panda_arm_controller_INSTALL_PREFIX "")
   set(panda_arm_controller_PREFIX ${panda_arm_controller_DEVEL_PREFIX})
 else()
   set(panda_arm_controller_SOURCE_PREFIX "")
   set(panda_arm_controller_DEVEL_PREFIX "")
-  set(panda_arm_controller_INSTALL_PREFIX /home/bert/catkin_ws_link/install)
+  set(panda_arm_controller_INSTALL_PREFIX /home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/install)
   set(panda_arm_controller_PREFIX ${panda_arm_controller_INSTALL_PREFIX})
 endif()
 
@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(panda_arm_controller_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT "/home/bert/catkin_ws_link/src/panda_arm_controller/include " STREQUAL " ")
+if(NOT "/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/src/panda_arm_controller/include;/usr/share/orocos_kdl/cmake/../../../include;/usr/include/eigen3 " STREQUAL " ")
   set(panda_arm_controller_INCLUDE_DIRS "")
-  set(_include_dirs "/home/bert/catkin_ws_link/src/panda_arm_controller/include")
+  set(_include_dirs "/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/src/panda_arm_controller/include;/usr/share/orocos_kdl/cmake/../../../include;/usr/include/eigen3")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -110,13 +110,13 @@ if(NOT "/home/bert/catkin_ws_link/src/panda_arm_controller/include " STREQUAL " 
         message(FATAL_ERROR "Project 'panda_arm_controller' specifies '${idir}' as an include dir, which is not found.  It does not exist in '${include}'.  ${_report}")
       endif()
     else()
-      message(FATAL_ERROR "Project 'panda_arm_controller' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/bert/catkin_ws_link/src/panda_arm_controller/${idir}'.  ${_report}")
+      message(FATAL_ERROR "Project 'panda_arm_controller' specifies '${idir}' as an include dir, which is not found.  It does neither exist as an absolute directory nor in '/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/src/panda_arm_controller/${idir}'.  ${_report}")
     endif()
     _list_append_unique(panda_arm_controller_INCLUDE_DIRS ${include})
   endforeach()
 endif()
 
-set(libraries "")
+set(libraries "panda_arm_controller;orocos-kdl")
 foreach(library ${libraries})
   # keep build configuration keywords, generator expressions, target names, and absolute libraries as-is
   if("${library}" MATCHES "^(debug|optimized|general)$")
@@ -156,7 +156,7 @@ foreach(library ${libraries})
     set(lib_path "")
     set(lib "${library}-NOTFOUND")
     # since the path where the library is found is returned we have to iterate over the paths manually
-    foreach(path /home/bert/catkin_ws_link/devel/lib;/home/bert/catkin_ws_link/devel/lib;/opt/ros/noetic/lib)
+    foreach(path /home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/devel/lib;/home/irsl2/garcia_teleop/spacemouse_panda_controller/catkin_ws/devel/lib;/home/irsl2/garcia_teleop/ros_ws/devel/lib;/home/irsl2/realsense_ws/devel/lib;/opt/ros/noetic/lib)
       find_library(lib ${library}
         PATHS ${path}
         NO_DEFAULT_PATH NO_CMAKE_FIND_ROOT_PATH)
@@ -187,7 +187,7 @@ foreach(t ${panda_arm_controller_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "roscpp;std_msgs")
+set(depends "controller_interface;hardware_interface;pluginlib;franka_hw;franka_msgs;roscpp;geometry_msgs;realtime_tools;tf2;urdf;kdl_parser")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls
