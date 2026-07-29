@@ -14,3 +14,9 @@ joint_impedance_ik_controller:
   max_linear_pos_update: 0.007
   max_angular_pos_update: 0.03
   arm_mounting_orientation: [0.0, 0.0, 0.0]
+
+gripper_controller:
+  type: panda_arm_controller/GripperController
+  joint_names:
+    - panda_finger_joint1
+    - panda_finger_joint2

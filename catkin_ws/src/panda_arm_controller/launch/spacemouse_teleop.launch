@@ -19,9 +19,7 @@
     <rosparam command="load" file="$(find panda_arm_controller)/config/controllers.yaml" />
     
     <!-- load controller as plugin into controller_manager created by franka_control.launch -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_impedance_ik_controller" output="screen" />
-    <!-- load controller as plugin into controller_manager created by franka_control.launch -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="gripper_controller" output="screen" />
-    
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_impedance_ik_controller gripper_controller" output="screen" />
+
 
 </launch>
