@@ -80,7 +80,10 @@ namespace panda_arm_controller
         {
             current_gripper_width_ += kStepPerTick;
         }
-        current_gripper_width_ = std::clamp(current_gripper_width_, 0.0, 0.08);
+        
+        if (current_gripper_width<0) current_gripper_width_ = 0;
+        if (current_gripper_width>0.08) current_gripper_width_ = 0.08;
+        
 
         franka_gripper::MoveGoal goal;
         goal.width = current_gripper_width_;
