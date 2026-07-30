@@ -14,7 +14,11 @@ System requirements: Ubuntu 20.04 (Focal Fossa)
 Project can be built using [catkin_make](https://github.com/ros/catkin), with the CMakeLists.txt included in the repo.
 
 ## Running the project
-To run the project, source an ROS directory containing the necessary packages. Then source the catkin_ws devel/setup.bash workspace, build the project using catkin_make, and use ROS commands to run the desired packages. To run the gripper node only, you can use the launch file in the panda_gripper_teleop package. To run the gripper node and control mode, you can use the launch file in the panda_arm_controller package (main implementation). To perform tasks using the Spacemouse and arm, control x, y, z, roll, pitch, and yaw using the mouse's 6 DOF from the joystick. Open the gripper using left button and close it using right button (it uses GraspAction, so that it will stop when it encounters resistance from an object and will be able to grasp it as it closes).
+Source the ROS base environment containing the necessary packages. Then build the project in the catkin_ws directory using catkin_make and source the newly built workspace's devel/setup.bash. 
+
+You can then use ROS commands to run the desired packages. To run the gripper node only, use the launch file in the panda_gripper_teleop package. To run the gripper node and control mode, use the launch file in the panda_arm_controller package (main implementation). 
+
+To perform tasks using the Spacemouse and arm, control x, y, z, roll, pitch, and yaw using the mouse's 6 DOF from the joystick. Open the gripper using left button and close it using right button (note: uses GraspAction, so the gripper automatically stops closing whenit detects physical resistance from an object).
 
 ## License
 This project is licensed under The MIT License -- see the [LICENSE](LICENSE) file for details.
