@@ -187,7 +187,7 @@ foreach(t ${panda_arm_controller_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "controller_interface;hardware_interface;pluginlib;franka_hw;franka_msgs;roscpp;geometry_msgs;realtime_tools;tf2;urdf;kdl_parser")
+set(depends "controller_interface;hardware_interface;pluginlib;franka_hw;franka_msgs;franka_gripper;actionlib;roscpp;geometry_msgs;realtime_tools;tf2;urdf;kdl_parser")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls

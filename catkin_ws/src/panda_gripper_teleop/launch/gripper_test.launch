@@ -15,7 +15,7 @@
     <!-- start the spacemouse node -->
     <node name="spacemouse_node" pkg="franka_spacemouse" type="spacemouse_node" />
 
-    <node name="gripper_teleop_node" pkg="panda_gripper_teleop" type="gripper_teleop_node" output="screen">
+    <node name="gripper_teleop_node" pkg="panda_gripper_teleop" type="panda_gripper_teleop" output="screen">
         <param name="step_width" value="0.004"/>
         <param name="jog_speed" value="0.05"/>
         <param name="timer_rate" value="10.0"/>

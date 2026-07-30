@@ -70,9 +70,9 @@ int main(int argc, char** argv)
 	double input_start = 100.0; // lowest raw mouse value we register
 	double input_end = 350.0;  // highest raw mouse value it is possible to register
 	double output_start_lin = 0.0; // beginning of linear range we convert mouse values to
-	double output_end_lin = 0.02; // end of linear range we convert mouse values to (2 cm)
+	double output_end_lin = 0.01; // end of linear range we convert mouse values to (2 cm)
 	double output_start_ang = 0.0; // beginning of angular range we convert mouse values to
-	double output_end_ang = (3.1415926535 / 180); // end of angular range we convert mouse values to (1 deg--units in rad)
+	double output_end_ang = (3.1415926535 / 360); // end of angular range we convert mouse values to (1 deg--units in rad)
 
 	// main loop to read spacemouse input
 	while (ros::ok()){
@@ -94,15 +94,15 @@ int main(int argc, char** argv)
 		int reportID = buf[0];
 		if (reportID==1){ //if it is position report
 
-			ang_x = (short)(buf[2] << 8) | buf[1];
-			ang_y = (short)(buf[4] << 8) | buf[3];
-			ang_z = (short)(buf[6] << 8) | buf[5];
+			lin_y = (short)(buf[2] << 8) | buf[1];
+			lin_x = (short)(buf[4] << 8) | buf[3];
+			lin_z = (short)(buf[6] << 8) | buf[5];
 
 			while (hid_read(g_handle, buf, bufSize)==0){}; //get orientation report, since pos and ori come as a pair always.
 
-			lin_x = (short)(buf[2] << 8) | buf[1];
-			lin_y = (short)(buf[4] << 8) | buf[3];
-			lin_z = (short)(buf[6] << 8) | buf[5];
+			ang_y = (short)(buf[2] << 8) | buf[1];
+			ang_x = (short)(buf[4] << 8) | buf[3];
+			ang_z = (short)(buf[6] << 8) | buf[5];
 
 			//printf("%i %i %i\n",ang_x,ang_y,ang_z);
 			//printf("%i %i %i\n",lin_x,lin_y,lin_z);

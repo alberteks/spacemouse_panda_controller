@@ -27,7 +27,7 @@ include_directories(
 )
 
 # Build executable for gripper teleop node
-add_library(${PROJECT_NAME}
+add_executable(${PROJECT_NAME}
   src/gripper_teleop_node.cpp
 )
 
