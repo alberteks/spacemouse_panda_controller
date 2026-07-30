@@ -14,12 +14,17 @@
 
     <!-- start the spacemouse node -->
     <node name="spacemouse_node" pkg="franka_spacemouse" type="spacemouse_node" />
+
+    <node name="gripper_teleop_node" pkg="panda_gripper_teleop" type="gripper_teleop_node" output="screen">
+        <param name="step_width" value="0.004"/>
+        <param name="jog_speed" value="0.05"/>
+        <param name="timer_rate" value="10.0"/>
+    </node>
     
     <!-- load controller parameters from config file -->
     <rosparam command="load" file="$(find panda_arm_controller)/config/controllers.yaml" />
     
     <!-- load controller as plugin into controller_manager created by franka_control.launch -->
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_impedance_ik_controller gripper_controller" output="screen" />
-
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" args="joint_impedance_ik_controller" output="screen" />
 
 </launch>
